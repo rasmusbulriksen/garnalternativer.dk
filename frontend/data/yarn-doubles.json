@@ -1,0 +1,20 @@
+[
+    {
+        "id": "Sandnes-sunday-og-tynn-silk-mohair",
+        "type": "double",
+        "name": "Sandnes Sunday og Sandnes Tynn Silk Mohair",
+        "image": "/yarns/sandnes/double/sandnes-sunday-og-tynn-silk-mohair.jpg",
+        "tension": 20,
+        "mainYarnId": "sandnes-sunday",
+        "carryAlongYarnId": "sandnes-tynn-silk-mohair"
+    },
+    {
+        "id": "navia-uno-og-alpakka.jpg",
+        "type": "double",
+        "name": "Navia Uno og Navia Alpakka",
+        "image": "/yarns/navia/double/navia-uno-og-alpakka.jpg",
+        "tension": 20,
+        "mainYarnId": "navia-uno",
+        "carryAlongYarnId": "navia-alpakka"
+    }
+]

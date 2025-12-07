@@ -1,0 +1,212 @@
+[
+  {
+    "id": "filcolana-alva",
+    "type": "single",
+    "name": "Filcolana Alva",
+    "image": "/yarns/filcolana/single/filcolana-alva.jpg",
+    "skeinLength": 100,
+    "tension": 21,
+    "dummyUrl": "https://rito.dk/173-drops-lima",
+    "retailers": [
+      {
+        "name": "Hobbii.dk",
+        "price": 45,
+        "url": "https://hobbii.dk"
+      },
+      {
+        "name": "Rito.dk",
+        "price": 40,
+        "url": "https://rito.dk"
+      }
+    ]
+  },
+  {
+    "id": "filcolana-merci",
+    "type": "single",
+    "name": "Filcolana Merci",
+    "image": "/yarns/filcolana/single/filcolana-merci.avif",
+    "skeinLength": 120,
+    "tension": 21,
+    "dummyUrl": "https://rito.dk/173-drops-lima",
+    "retailers": [
+      {
+        "name": "Hobbii.dk",
+        "price": 52,
+        "url": "https://hobbii.dk"
+      },
+      {
+        "name": "Rito.dk",
+        "price": 45,
+        "url": "https://rito.dk"
+      }
+    ]
+  },
+  {
+    "id": "filcolana-pernilla",
+    "type": "single",
+    "name": "Filcolana Pernilla",
+    "image": "/yarns/filcolana/single/filcolana-pernilla.webp",
+    "skeinLength": 95,
+    "tension": 21,
+    "dummyUrl": "https://rito.dk/173-drops-lima",
+    "retailers": [
+      {
+        "name": "Hobbii.dk",
+        "price": 48,
+        "url": "https://hobbii.dk"
+      },
+      {
+        "name": "Rito.dk",
+        "price": 40,
+        "url": "https://rito.dk"
+      }
+    ]
+  },
+  {
+    "id": "rauma-fivel",
+    "type": "single",
+    "name": "Rauma Fivel",
+    "image": "/yarns/rauma/single/rauma-fivel.webp",
+    "skeinLength": 110,
+    "tension": 21,
+    "dummyUrl": "https://rito.dk/173-drops-lima",
+    "retailers": [
+      {
+        "name": "Hobbii.dk",
+        "price": 42,
+        "url": "https://hobbii.dk"
+      },
+      {
+        "name": "Rito.dk",
+        "price": 35,
+        "url": "https://rito.dk"
+      }
+    ]
+  },
+  {
+    "id": "sandnes-double-sunday",
+    "type": "single",
+    "name": "Sandnes Double Sunday",
+    "image": "/yarns/sandnes/single/sandnes-double-sunday.webp",
+    "skeinLength": 150,
+    "tension": 21,
+    "dummyUrl": "https://rito.dk/173-drops-lima",
+    "retailers": [
+      {
+        "name": "Hobbii.dk",
+        "price": 55,
+        "url": "https://hobbii.dk"
+      },
+      {
+        "name": "Rito.dk",
+        "price": 45,
+        "url": "https://rito.dk"
+      }
+    ]
+  },
+  {
+    "id": "sandnes-line",
+    "type": "single",
+    "name": "Sandnes Line",
+    "image": "/yarns/sandnes/single/sandnes-line.webp",
+    "skeinLength": 90,
+    "tension": 20,
+    "dummyUrl": "https://rito.dk/173-drops-lima",
+    "retailers": [
+      {
+        "name": "Hobbii.dk",
+        "price": 38,
+        "url": "https://hobbii.dk"
+      },
+      {
+        "name": "Rito.dk",
+        "price": 32,
+        "url": "https://rito.dk"
+      }
+    ]
+  },
+  {
+    "id": "sandnes-sunday",
+    "type": "single",
+    "name": "Sandnes Sunday",
+    "image": "/yarns/sandnes/single/sandnes-sunday.webp",
+    "skeinLength": 105,
+    "tension": 20,
+    "dummyUrl": "https://rito.dk/173-drops-lima",
+    "retailers": [
+      {
+        "name": "Hobbii.dk",
+        "price": 46,
+        "url": "https://hobbii.dk"
+      },
+      {
+        "name": "Rito.dk",
+        "price": 40,
+        "url": "https://rito.dk"
+      }
+    ]
+  },
+  {
+    "id": "sandnes-tynn-silk-mohair",
+    "type": "single",
+    "name": "Sandnes Tynn Silk Mohair",
+    "image": "/yarns/sandnes/single/sandnes-tynn-silk-mohair.png",
+    "skeinLength": 100,
+    "tension": 20,
+    "dummyUrl": "https://rito.dk/173-drops-lima",
+    "retailers": [
+      {
+        "name": "Hobbii.dk",
+        "price": 50,
+        "url": "https://hobbii.dk"
+      },
+      {
+        "name": "Rito.dk",
+        "price": 39,
+        "url": "https://rito.dk"
+      }
+    ]
+  },
+  {
+    "id": "navia-uno",
+    "type": "single",
+    "name": "Navia Uno",
+    "image": "/yarns/navia/single/navia-uno.png",
+    "skeinLength": 100,
+    "tension": 20,
+    "dummyUrl": "https://rito.dk/173-drops-lima",
+    "retailers": [
+      {
+        "name": "Hobbii.dk",
+        "price": 48,
+        "url": "https://hobbii.dk"
+      },
+      {
+        "name": "Rito.dk",
+        "price": 50,
+        "url": "https://rito.dk"
+      }
+    ]
+  },
+  {
+    "id": "navia-alpakka",
+    "type": "single",
+    "name": "Navia Alpakka",
+    "image": "/yarns/navia/single/navia-alpakka.png",
+    "skeinLength": 100,
+    "tension": 20,
+    "dummyUrl": "https://rito.dk/173-drops-lima",
+    "retailers": [
+      {
+        "name": "Hobbii.dk",
+        "price": 50,
+        "url": "https://hobbii.dk"
+      },
+      {
+        "name": "Rito.dk",
+        "price": 25,
+        "url": "https://rito.dk"
+      }
+    ]
+  }
+]

@@ -1,0 +1,20 @@
+[
+  {
+    "id": "spot-sweater",
+    "name": "Spot Sweater",
+    "image": "/spot-sweater.webp",
+    "designer": "PetiteKnit",
+    "difficulty": 3,
+    "sizes": {
+      "XS": 600,
+      "S": 700,
+      "M": 800,
+      "L": 900,
+      "XL": 1000,
+      "2XL": 1100,
+      "3XL": 1200
+    },
+    "description": "A beautiful sweater pattern featuring a classic design. Perfect for intermediate knitters looking for a timeless piece."
+  }
+]
+

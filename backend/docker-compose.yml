@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:18.1
+    container_name: productfeed_db
+    environment:
+      POSTGRES_USER: productfeed
+      POSTGRES_PASSWORD: productfeed_secret
+      POSTGRES_DB: productfeed
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
