@@ -43,7 +43,7 @@ export async function importProducts(products: Product[], retailerId: number): P
   // Process in batches
   for (let i = 0; i < products.length; i += BATCH_SIZE) {
     const batch = products.slice(i, i + BATCH_SIZE);
-    const result = await upsertBatch(batch, retailerId);
+    const result = await insertBatch(batch, retailerId);
     inserted += result.inserted;
     updated += result.updated;
     
@@ -53,23 +53,22 @@ export async function importProducts(products: Product[], retailerId: number): P
   return { inserted, updated };
 }
 
-async function upsertBatch(products: Product[], retailerId: number): Promise<{ inserted: number; updated: number }> {
+async function insertBatch(products: Product[], retailerId: number): Promise<{ inserted: number; updated: number }> {
   if (products.length === 0) return { inserted: 0, updated: 0 };
   
-  // Build parameterized query for batch upsert
+  // Build parameterized query for batch insert
   const values: unknown[] = [];
   const valueRows: string[] = [];
   
   products.forEach((product, index) => {
-    const offset = index * 10;
-    valueRows.push(`($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, $${offset + 10})`);
+    const offset = index * 9;
+    valueRows.push(`($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9})`);
     values.push(
       retailerId,
       product.retailers_product_id,
       product.brand,
       product.name,
       product.category,
-      null, // yarn_id is assigned later via matching
       product.price_before_discount,
       product.price_after_discount,
       product.stock_status,
@@ -78,7 +77,7 @@ async function upsertBatch(products: Product[], retailerId: number): Promise<{ i
   });
   
   const query = `
-    INSERT INTO product (retailer_id, retailers_product_id, brand, name, category, yarn_id, price_before_discount, price_after_discount, stock_status, url)
+    INSERT INTO product_imported (retailer_id, retailers_product_id, brand, name, category, price_before_discount, price_after_discount, stock_status, url)
     VALUES ${valueRows.join(', ')}
   `;
   

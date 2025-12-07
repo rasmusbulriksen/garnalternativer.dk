@@ -55,6 +55,9 @@ async function main() {
     fs.readFileSync(retailersPath, 'utf-8')
   );
   
+  // Development: full refresh each run (truncate both due to FK)
+  await pool.query('TRUNCATE TABLE product_aggregated, product_imported RESTART IDENTITY CASCADE');
+  
   let totalInserted = 0;
   let totalUpdated = 0;
   
@@ -96,6 +99,74 @@ async function main() {
     } catch (error) {
       console.error(`  ❌ Error processing ${retailer.name}:`, error);
     }
+  }
+
+  // Aggregate: for each yarn, pick cheapest per retailer
+  const yarns = await pool.query<{
+    yarn_id: number;
+    search_query: string | null;
+    negative_keywords: string[] | null;
+  }>(`SELECT yarn_id, search_query, negative_keywords FROM yarn WHERE is_active = TRUE`);
+
+  for (const yarn of yarns.rows) {
+    if (!yarn.search_query) continue;
+    const neg = yarn.negative_keywords && yarn.negative_keywords.length > 0
+      ? yarn.negative_keywords
+      : [];
+
+    // Select cheapest per retailer using DISTINCT ON
+    const aggRows = await pool.query<{
+      product_imported_id: number;
+      retailer_id: number;
+      retailers_product_id: string;
+      brand: string | null;
+      name: string;
+      category: string | null;
+      price_before_discount: string | null;
+      price_after_discount: string | null;
+      stock_status: string | null;
+      url: string;
+    }>(
+      `
+      INSERT INTO product_aggregated (
+        product_imported_id,
+        retailer_id,
+        yarn_id,
+        retailers_product_id,
+        brand,
+        name,
+        category,
+        price_before_discount,
+        price_after_discount,
+        stock_status,
+        url,
+        created_at,
+        updated_at
+      )
+      SELECT DISTINCT ON (pi.retailer_id)
+        pi.product_imported_id,
+        pi.retailer_id,
+        $1::int AS yarn_id,
+        pi.retailers_product_id,
+        pi.brand,
+        pi.name,
+        pi.category,
+        pi.price_before_discount,
+        pi.price_after_discount,
+        pi.stock_status,
+        pi.url,
+        NOW(),
+        NOW()
+      FROM product_imported pi
+      WHERE pi.name ILIKE $2
+        AND ($3::text[] IS NULL OR array_length($3::text[], 1) IS NULL OR NOT (pi.name ILIKE ANY ($3::text[])))
+      ORDER BY pi.retailer_id, pi.price_after_discount ASC NULLS LAST, pi.product_imported_id ASC
+      RETURNING *;
+      `,
+      [yarn.yarn_id, `%${yarn.search_query}%`, neg.length > 0 ? neg : null]
+    );
+
+    console.log(`  🧶 Aggregated yarn ${yarn.yarn_id}: inserted ${aggRows.rowCount} rows`);
   }
   
   const duration = ((Date.now() - startTime) / 1000).toFixed(2);

@@ -14,18 +14,25 @@ erDiagram
         timestamp updated_at
     }
 
-    product {
-        serial product_id PK
+    product_imported {
+        serial product_imported_id PK
         int retailer_id FK
         text retailers_product_id "retailer's product id"
         text brand
         text name
         text category
-        int yarn_id FK "normalized yarn match"
         decimal price_before_discount
         decimal price_after_discount
         varchar(255) stock_status
         text url
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    product_aggregated {
+        serial product_aggregated_id PK
+        int product_imported_id FK
+        int yarn_id FK
         timestamp created_at
         timestamp updated_at
     }

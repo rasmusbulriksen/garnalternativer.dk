@@ -74,6 +74,7 @@ All feeds from partner-ads.com share the same XML structure:
 | price_after_discount | DECIMAL | Current price |
 | stock_status | VARCHAR(255) | Stock status text |
 | url | TEXT | Product URL |
+| search_tsv | TSVECTOR | Generated: brand + name + category |
 | created_at | TIMESTAMP | Created timestamp |
 | updated_at | TIMESTAMP | Updated timestamp |
 
@@ -146,10 +147,17 @@ npm run dev
 
 ## Development
 
-For local development, sample product feeds are available in the `xml-product-feeds-for-dev/` directory:
+For reference, two sample product feeds are available in the `xml-product-feeds-for-dev/` directory:
 
 - `ofeig-ko.dk.xml` (~1.5MB)
 - `rito.dk.xml` (~32MB)
+
+### Aggregation (development flow)
+
+- On each feed import we truncate `product_imported` and `product_aggregated` (dev-only full refresh).
+- We import raw rows into `product_imported`.
+- For each `yarn` with `search_query`, we pick the cheapest `product_imported` per retailer where `name ILIKE '%search_query%'` and `name NOT ILIKE ANY(negative_keywords)`, then insert those rows into `product_aggregated`.
+- Ties are resolved by lowest `product_imported_id`.
 
 ## Retailers
 

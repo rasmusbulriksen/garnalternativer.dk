@@ -1,6 +1,9 @@
 -- ProductFeedAPI Database Schema
 -- Source of truth: backend/diagrams/er-diagram.md
 
+-- Extensions
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
 -- Retailers
 CREATE TABLE IF NOT EXISTS retailer (
     retailer_id SERIAL PRIMARY KEY,
@@ -46,15 +49,38 @@ CREATE TABLE IF NOT EXISTS pattern (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Retailer products (one row per retailer/swatches)
-CREATE TABLE IF NOT EXISTS product (
-    product_id SERIAL PRIMARY KEY,
+-- Imported retailer products (one row per retailer/swatches)
+CREATE TABLE IF NOT EXISTS product_imported (
+    product_imported_id SERIAL PRIMARY KEY,
     retailer_id INT NOT NULL REFERENCES retailer(retailer_id),
     retailers_product_id TEXT NOT NULL,
     brand TEXT,
     name TEXT NOT NULL,
     category TEXT,
-    yarn_id INT REFERENCES yarn(yarn_id),
+    price_before_discount DECIMAL(10, 2),
+    price_after_discount DECIMAL(10, 2),
+    stock_status VARCHAR(255),
+    url TEXT NOT NULL,
+    search_tsv tsvector GENERATED ALWAYS AS (
+        to_tsvector(
+            'simple',
+            coalesce(brand, '') || ' ' || coalesce(name, '') || ' ' || coalesce(category, '')
+        )
+    ) STORED,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Aggregated products (cheapest per retailer per yarn)
+CREATE TABLE IF NOT EXISTS product_aggregated (
+    product_aggregated_id SERIAL PRIMARY KEY,
+    product_imported_id INT NOT NULL REFERENCES product_imported(product_imported_id),
+    retailer_id INT NOT NULL REFERENCES retailer(retailer_id),
+    yarn_id INT NOT NULL REFERENCES yarn(yarn_id),
+    retailers_product_id TEXT NOT NULL,
+    brand TEXT,
+    name TEXT NOT NULL,
+    category TEXT,
     price_before_discount DECIMAL(10, 2),
     price_after_discount DECIMAL(10, 2),
     stock_status VARCHAR(255),
@@ -64,9 +90,12 @@ CREATE TABLE IF NOT EXISTS product (
 );
 
 -- Helpful indexes
-CREATE INDEX IF NOT EXISTS idx_product_retailer_id ON product(retailer_id);
-CREATE INDEX IF NOT EXISTS idx_product_yarn_id ON product(yarn_id);
-CREATE INDEX IF NOT EXISTS idx_product_brand ON product(brand);
-CREATE INDEX IF NOT EXISTS idx_product_name ON product(name);
+CREATE INDEX IF NOT EXISTS idx_product_imported_retailer_id ON product_imported(retailer_id);
+CREATE INDEX IF NOT EXISTS idx_product_imported_name ON product_imported(name);
+CREATE INDEX IF NOT EXISTS idx_product_imported_search_tsv ON product_imported USING GIN (search_tsv);
+CREATE INDEX IF NOT EXISTS idx_product_imported_name_trgm ON product_imported USING GIN (name gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_product_imported_brand_trgm ON product_imported USING GIN (brand gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_product_aggregated_yarn_id ON product_aggregated(yarn_id);
+CREATE INDEX IF NOT EXISTS idx_product_aggregated_retailer_id ON product_aggregated(retailer_id);
 CREATE INDEX IF NOT EXISTS idx_yarn_tension ON yarn(tension);
 
