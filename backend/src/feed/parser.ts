@@ -28,12 +28,7 @@ export interface Product {
 /**
  * Parse an XML product feed file and filter for yarn products
  */
-export function parseProductFeed(filePath: string): Product[] {
-  console.log(`📄 Reading feed: ${filePath}`);
-  
-  // Read file with latin1 encoding (iso-8859-1)
-  const xmlContent = fs.readFileSync(filePath, 'latin1');
-  
+export function parseProductFeedFromXml(xmlContent: string): Product[] {
   const parser = new XMLParser({
     ignoreAttributes: true,
     parseTagValue: false, // Keep values as strings
@@ -69,5 +64,12 @@ export function parseProductFeed(filePath: string): Product[] {
     stock_status: raw.lagerantal || null,
     url: raw.vareurl,
   }));
+}
+
+// Backward-compatible file-based entrypoint (dev feeds)
+export function parseProductFeed(filePath: string): Product[] {
+  console.log(`📄 Reading feed: ${filePath}`);
+  const xmlContent = fs.readFileSync(filePath, 'latin1');
+  return parseProductFeedFromXml(xmlContent);
 }
 

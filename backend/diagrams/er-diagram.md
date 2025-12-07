@@ -40,6 +40,8 @@ erDiagram
         int lowest_price_on_the_market
         decimal price_per_meter
         boolean is_active
+        text search_query
+        text[] negative_keywords
         timestamp created_at
         timestamp updated_at
         timestamp active_since

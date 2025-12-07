@@ -80,24 +80,11 @@ async function upsertBatch(products: Product[], retailerId: number): Promise<{ i
   const query = `
     INSERT INTO product (retailer_id, retailers_product_id, brand, name, category, yarn_id, price_before_discount, price_after_discount, stock_status, url)
     VALUES ${valueRows.join(', ')}
-    ON CONFLICT (retailer_id, retailers_product_id) DO UPDATE SET
-      brand = EXCLUDED.brand,
-      name = EXCLUDED.name,
-      category = EXCLUDED.category,
-      price_before_discount = EXCLUDED.price_before_discount,
-      price_after_discount = EXCLUDED.price_after_discount,
-      stock_status = EXCLUDED.stock_status,
-      url = EXCLUDED.url,
-      updated_at = CURRENT_TIMESTAMP
-    RETURNING (xmax = 0) AS inserted
   `;
   
   const result = await pool.query(query, values);
   
-  // Count inserts vs updates
-  const insertedCount = result.rows.filter(row => row.inserted).length;
-  const updatedCount = result.rows.length - insertedCount;
-  
-  return { inserted: insertedCount, updated: updatedCount };
+  // All rows are inserts; no updates happen without a conflict target
+  return { inserted: result.rowCount ?? products.length, updated: 0 };
 }
 

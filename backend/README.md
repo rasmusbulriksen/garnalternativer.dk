@@ -90,6 +90,8 @@ All feeds from partner-ads.com share the same XML structure:
 | lowest_price_on_the_market | INT | Cached min price (DKK) |
 | price_per_meter | DECIMAL | Derived metric |
 | is_active | BOOLEAN | Toggle for frontend |
+| search_query | TEXT | Saved search query used for matching |
+| negative_keywords | TEXT[] | Terms to exclude when matching |
 | created_at | TIMESTAMP | Created timestamp |
 | updated_at | TIMESTAMP | Updated timestamp |
 | active_since | TIMESTAMP | First activation |

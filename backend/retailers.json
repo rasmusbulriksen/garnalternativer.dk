@@ -2,17 +2,58 @@
     "retailers": [
         {
             "name": "rito.dk",
-            "product_feed_url": "https://www.partner-ads.com/dk/feed_udlaes.php?partnerid=46912&bannerid=30371&feedid=218",
-            "partner_id": "46912",
             "banner_id": "30371",
             "feed_id": "218"
         },
         {
             "name": "ofeig-ko.dk",
-            "product_feed_url": "https://www.partner-ads.com/dk/feed_udlaes.php?partnerid=46912&bannerid=95729&feedid=2622",
-            "partner_id": "46912",
             "banner_id": "95729",
             "feed_id": "2622"
+        },
+        {
+            "name": "garnbyjacobsen.dk",
+            "banner_id": "109349",
+            "feed_id": "3556"
+        },
+        {
+            "name": "hobbygarn.dk",
+            "banner_id": "56355",
+            "feed_id": "992"
+        },
+        {
+            "name": "kreamok.dk",
+            "banner_id": "110635",
+            "feed_id": "3647"
+        },
+        {
+            "name": "kreativgarn.dk",
+            "banner_id": "84732",
+            "feed_id": "2073"
+        },
+        {
+            "name": "kukuk.dk",
+            "banner_id": "91311",
+            "feed_id": "2380"
+        },
+        {
+            "name": "nordiskgarn.dk",
+            "banner_id": "91465",
+            "feed_id": "2389"
+        },
+        {
+            "name": "stofmoellen.dk",
+            "banner_id": "93031",
+            "feed_id": "2465"
+        },
+        {
+            "name": "tantegroencph.dk",
+            "banner_id": "108078",
+            "feed_id": "3452"
+        },
+        {
+            "name": "vivisbutik.dk",
+            "banner_id": "58200",
+            "feed_id": "1062"
         }
     ]
 }

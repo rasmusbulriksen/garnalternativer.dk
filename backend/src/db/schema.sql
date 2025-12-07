@@ -25,6 +25,8 @@ CREATE TABLE IF NOT EXISTS yarn (
     lowest_price_on_the_market INT,
     price_per_meter DECIMAL(10, 4),
     is_active BOOLEAN DEFAULT TRUE,
+    search_query TEXT,
+    negative_keywords TEXT[],
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     active_since TIMESTAMP WITH TIME ZONE,
@@ -58,8 +60,7 @@ CREATE TABLE IF NOT EXISTS product (
     stock_status VARCHAR(255),
     url TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(retailer_id, retailers_product_id)
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Helpful indexes
