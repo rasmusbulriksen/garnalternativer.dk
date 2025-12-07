@@ -9,25 +9,20 @@ export interface RawProduct {
   produktid: string;
   nypris?: string;
   glpris?: string;
-  fragtomk?: string;
   lagerantal?: string;
-  leveringstid?: string;
-  color?: string;
   vareurl: string;
 }
 
 export interface Product {
-  forhandler: string;
+  retailerName: string;
+  retailers_product_id: string;
   brand: string | null;
-  produktnavn: string;
-  produktid: string;
-  nypris: number | null;
-  glpris: number | null;
-  fragtomk: number | null;
-  lagerantal: string | null;
-  leveringstid: string | null;
-  color: string | null;
-  vareurl: string;
+  name: string;
+  category: string | null;
+  price_before_discount: number | null;
+  price_after_discount: number | null;
+  stock_status: string | null;
+  url: string;
 }
 
 /**
@@ -56,7 +51,7 @@ export function parseProductFeed(filePath: string): Product[] {
   console.log(`📦 Total products in feed: ${rawProducts.length}`);
   
   // Filter for yarn products (kategorinavn contains "Garn")
-  const yarnProducts = rawProducts.filter(p => 
+  const yarnProducts = rawProducts.filter(p =>
     p.kategorinavn?.toLowerCase().includes('garn')
   );
   
@@ -64,17 +59,15 @@ export function parseProductFeed(filePath: string): Product[] {
   
   // Transform to our Product type
   return yarnProducts.map(raw => ({
-    forhandler: raw.forhandler,
+    retailerName: raw.forhandler,
     brand: raw.brand || null,
-    produktnavn: raw.produktnavn,
-    produktid: String(raw.produktid),
-    nypris: raw.nypris ? parseFloat(raw.nypris) : null,
-    glpris: raw.glpris ? parseFloat(raw.glpris) : null,
-    fragtomk: raw.fragtomk ? parseFloat(raw.fragtomk) : null,
-    lagerantal: raw.lagerantal || null,
-    leveringstid: raw.leveringstid || null,
-    color: raw.color || null,
-    vareurl: raw.vareurl,
+    name: raw.produktnavn,
+    retailers_product_id: String(raw.produktid),
+    category: raw.kategorinavn || null,
+    price_before_discount: raw.glpris ? parseFloat(raw.glpris) : null,
+    price_after_discount: raw.nypris ? parseFloat(raw.nypris) : null,
+    stock_status: raw.lagerantal || null,
+    url: raw.vareurl,
   }));
 }
 

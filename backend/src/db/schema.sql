@@ -1,48 +1,71 @@
 -- ProductFeedAPI Database Schema
--- Run this to initialize the database
+-- Source of truth: backend/diagrams/er-diagram.md
 
--- Products table
--- Stores yarn products from merchant feeds
-CREATE TABLE IF NOT EXISTS products (
-    id SERIAL PRIMARY KEY,
-    
-    -- Merchant information
-    forhandler VARCHAR(255) NOT NULL,
-    
-    -- Product details
-    brand VARCHAR(255),
-    produktnavn VARCHAR(500) NOT NULL,
-    produktid VARCHAR(255) NOT NULL,
-    
-    -- Pricing
-    nypris DECIMAL(10, 2),
-    glpris DECIMAL(10, 2),
-    fragtomk DECIMAL(10, 2),
-    
-    -- Availability
-    lagerantal VARCHAR(100),
-    leveringstid VARCHAR(255),
-    
-    -- Product attributes
-    color VARCHAR(255),
-    
-    -- Affiliate link
-    vareurl TEXT NOT NULL,
-    
-    -- Timestamps
+-- Retailers
+CREATE TABLE IF NOT EXISTS retailer (
+    retailer_id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    product_feed_url VARCHAR(255) NOT NULL UNIQUE,
+    banner_id INT,
+    feed_id INT,
+    delivery_time VARCHAR(255),
+    delivery_price DECIMAL(10, 2),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    
-    -- Unique constraint: same product from same merchant
-    UNIQUE(forhandler, produktid)
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Index for faster lookups by merchant
-CREATE INDEX IF NOT EXISTS idx_products_forhandler ON products(forhandler);
+-- Canonical yarns
+CREATE TABLE IF NOT EXISTS yarn (
+    yarn_id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    description TEXT,
+    image_url VARCHAR(255),
+    tension INT,
+    skein_length INT,
+    lowest_price_on_the_market INT,
+    price_per_meter DECIMAL(10, 4),
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    active_since TIMESTAMP WITH TIME ZONE,
+    inactive_since TIMESTAMP WITH TIME ZONE
+);
 
--- Index for faster lookups by brand
-CREATE INDEX IF NOT EXISTS idx_products_brand ON products(brand);
+-- Patterns (matched to yarns via tension)
+CREATE TABLE IF NOT EXISTS pattern (
+    pattern_id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    image_url VARCHAR(255),
+    designer VARCHAR(255),
+    difficulty INT,
+    description TEXT,
+    tension INT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
 
--- Index for product search by name
-CREATE INDEX IF NOT EXISTS idx_products_produktnavn ON products(produktnavn);
+-- Retailer products (one row per retailer/swatches)
+CREATE TABLE IF NOT EXISTS product (
+    product_id SERIAL PRIMARY KEY,
+    retailer_id INT NOT NULL REFERENCES retailer(retailer_id),
+    retailers_product_id TEXT NOT NULL,
+    brand TEXT,
+    name TEXT NOT NULL,
+    category TEXT,
+    yarn_id INT REFERENCES yarn(yarn_id),
+    price_before_discount DECIMAL(10, 2),
+    price_after_discount DECIMAL(10, 2),
+    stock_status VARCHAR(255),
+    url TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(retailer_id, retailers_product_id)
+);
+
+-- Helpful indexes
+CREATE INDEX IF NOT EXISTS idx_product_retailer_id ON product(retailer_id);
+CREATE INDEX IF NOT EXISTS idx_product_yarn_id ON product(yarn_id);
+CREATE INDEX IF NOT EXISTS idx_product_brand ON product(brand);
+CREATE INDEX IF NOT EXISTS idx_product_name ON product(name);
+CREATE INDEX IF NOT EXISTS idx_yarn_tension ON yarn(tension);
 

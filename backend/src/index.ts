@@ -27,13 +27,13 @@ app.get('/products', async (req, res) => {
   }
 });
 
-// Get products by merchant
-app.get('/products/merchant/:merchant', async (req, res) => {
+// Get products by retailer
+app.get('/products/retailer/:retailer', async (req, res) => {
   try {
-    const { merchant } = req.params;
+    const { retailer } = req.params;
     const result = await pool.query(
       'SELECT * FROM products WHERE forhandler ILIKE $1 LIMIT 100',
-      [`%${merchant}%`]
+      [`%${retailer}%`]
     );
     res.json(result.rows);
   } catch (error) {

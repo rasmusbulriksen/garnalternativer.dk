@@ -1,5 +1,5 @@
 {
-    "merchants": [
+    "retailers": [
         {
             "name": "rito.dk",
             "product_feed_url": "https://www.partner-ads.com/dk/feed_udlaes.php?partnerid=46912&bannerid=30371&feedid=218",

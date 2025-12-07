@@ -3,41 +3,42 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { pool } from '../db/index.js';
 import { parseProductFeed } from './parser.js';
-import { importProducts } from './importer.js';
+import { importProducts, ensureRetailer } from './importer.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-interface Merchant {
+interface Retailer {
   name: string;
   product_feed_url: string;
+  banner_id?: number;
+  feed_id?: number;
 }
 
-interface MerchantsConfig {
-  merchants: Merchant[];
+interface RetailersConfig {
+  retailers: Retailer[];
 }
 
 async function main() {
   console.log('🚀 Starting product feed import...\n');
   
   const startTime = Date.now();
-  
-  // Read merchants config
-  const merchantsPath = path.join(__dirname, '../../merchants.json');
-  const merchantsConfig: MerchantsConfig = JSON.parse(
-    fs.readFileSync(merchantsPath, 'utf-8')
+  // Read retailers config
+  const retailersPath = path.join(__dirname, '../../retailers.json');
+  const retailersConfig: RetailersConfig = JSON.parse(
+    fs.readFileSync(retailersPath, 'utf-8')
   );
   
-  const feedsDir = path.join(__dirname, '../../ProductFeeds');
+  const feedsDir = path.join(__dirname, '../../xml-product-feeds-for-dev');
   
   let totalInserted = 0;
   let totalUpdated = 0;
   
-  for (const merchant of merchantsConfig.merchants) {
-    console.log(`\n📦 Processing: ${merchant.name}`);
+  for (const retailer of retailersConfig.retailers) {
+    console.log(`\n📦 Processing: ${retailer.name}`);
     console.log('─'.repeat(40));
     
-    const feedPath = path.join(feedsDir, `${merchant.name}.xml`);
+    const feedPath = path.join(feedsDir, `${retailer.name}.xml`);
     
     // Check if feed file exists
     if (!fs.existsSync(feedPath)) {
@@ -46,23 +47,31 @@ async function main() {
     }
     
     try {
+      // Ensure retailer exists and get id
+      const retailerId = await ensureRetailer({
+        name: retailer.name,
+        product_feed_url: retailer.product_feed_url,
+        banner_id: retailer.banner_id,
+        feed_id: retailer.feed_id,
+      });
+
       // Parse the feed
       const products = parseProductFeed(feedPath);
-      
+
       if (products.length === 0) {
         console.log('  ⚠️  No yarn products found in feed');
         continue;
       }
-      
+
       // Import to database
-      const { inserted, updated } = await importProducts(products);
-      
+      const { inserted, updated } = await importProducts(products, retailerId);
+
       totalInserted += inserted;
       totalUpdated += updated;
-      
+
       console.log(`  ✅ Completed: ${inserted} inserted, ${updated} updated`);
     } catch (error) {
-      console.error(`  ❌ Error processing ${merchant.name}:`, error);
+      console.error(`  ❌ Error processing ${retailer.name}:`, error);
     }
   }
   

@@ -8,7 +8,7 @@ build/
 dist/
 
 # Product feeds
-ProductFeeds/
+xml-product-feeds-for-dev/
 
 # Environment
 .env
