@@ -1,4 +1,4 @@
-# Mermaid ER Diagram
+# garnalternativer.dk database diagram
 
 ```mermaid
 erDiagram
@@ -17,7 +17,7 @@ erDiagram
     product_imported {
         serial product_imported_id PK
         int retailer_id FK
-        text retailers_product_id "retailer's product id"
+        text retailers_product_id
         text brand
         text name
         text category
@@ -32,6 +32,7 @@ erDiagram
     product_aggregated {
         serial product_aggregated_id PK
         int product_imported_id FK
+        int retailer_id FK
         int yarn_id FK
         timestamp created_at
         timestamp updated_at
@@ -67,8 +68,9 @@ erDiagram
         timestamp updated_at
     }
 
-    retailer ||--o{ product : "sells"
-    yarn ||--o{ product : "is aggregated from"
-    pattern ||--o{ yarn : "matched by tension"
-
+    product_imported ||--o{ product_aggregated : "is aggregated <br>cheapest-per-retailer"
+    retailer ||--o{ product_imported : "sells"
+    retailer ||--o{ product_aggregated : "sells"
+    yarn ||--o{ product_aggregated : "activated/deactivated <br> by searching in"
+    pattern ||--o{ yarn : "matches by tension"
 ```
