@@ -1,0 +1,21 @@
+# Cursor Rules
+
+## Diagrams
+
+When making changes to database schema, import logic, or data flow:
+
+- **Always update `backend/diagrams/er-diagram.md`** to reflect schema changes (tables, columns, relationships, constraints)
+- **Always update `backend/diagrams/import-sequence.md`** when modifying the import/aggregation flow
+- The ER diagram (`er-diagram.md`) is the source of truth for database structure
+- Keep sequence diagrams synchronized with actual code flow in `backend/src/feed/import.ts`
+
+## Database Schema
+
+- Schema changes must be reflected in both `backend/src/db/schema.sql` AND `backend/diagrams/er-diagram.md`
+- When adding/removing tables or columns, update both files
+- When changing relationships or constraints, update the ER diagram
+
+## Import Flow
+
+- Changes to aggregation logic, yarn matching, or feed processing should be documented in `backend/diagrams/import-sequence.md`
+- Keep sequence diagrams accurate to the actual code execution order

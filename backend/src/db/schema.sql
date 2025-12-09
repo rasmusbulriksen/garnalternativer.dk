@@ -85,6 +85,7 @@ CREATE TABLE IF NOT EXISTS product_aggregated (
     price_after_discount DECIMAL(10, 2),
     stock_status VARCHAR(255),
     url TEXT NOT NULL,
+    UNIQUE (yarn_id, retailer_id),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

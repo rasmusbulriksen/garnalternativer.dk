@@ -45,3 +45,31 @@ insert into yarn (
     now(),
     now()
 );
+
+insert into yarn (
+    name,
+    description,
+    image_url,
+    tension,
+    skein_length,
+    lowest_price_on_the_market,
+    price_per_meter,
+    is_active,
+    search_query,
+    negative_keywords,
+    created_at,
+    updated_at
+) values (
+    'Filcolana Pernilla',
+    'Filcolana Pernilla description',
+    'https://test.com',
+    21,
+    200,
+    22.95,
+    0.087,
+    true,
+    'pernilla',
+    ARRAY[''],
+    now(),
+    now()
+);

@@ -106,7 +106,9 @@ async function main() {
     yarn_id: number;
     search_query: string | null;
     negative_keywords: string[] | null;
-  }>(`SELECT yarn_id, search_query, negative_keywords FROM yarn WHERE is_active = TRUE`);
+  }>(`SELECT yarn_id, search_query, negative_keywords FROM yarn WHERE search_query IS NOT NULL`);
+
+  const yarnMatchCounts = new Map<number, number>();
 
   for (const yarn of yarns.rows) {
     if (!yarn.search_query) continue;
@@ -166,7 +168,25 @@ async function main() {
       [yarn.yarn_id, `%${yarn.search_query}%`, neg.length > 0 ? neg : null]
     );
 
+    yarnMatchCounts.set(yarn.yarn_id, aggRows.rowCount ?? 0);
     console.log(`  🧶 Aggregated yarn ${yarn.yarn_id}: inserted ${aggRows.rowCount} rows`);
+  }
+
+  // Update yarn.is_active based on whether matches were found
+  for (const [yarnId, matchCount] of yarnMatchCounts.entries()) {
+    const hasMatches = matchCount > 0;
+    await pool.query(
+      `
+      UPDATE yarn
+      SET 
+        is_active = $1,
+        active_since = CASE WHEN $1 = TRUE AND active_since IS NULL THEN NOW() ELSE active_since END,
+        inactive_since = CASE WHEN $1 = FALSE THEN NOW() ELSE inactive_since END,
+        updated_at = NOW()
+      WHERE yarn_id = $2
+      `,
+      [hasMatches, yarnId]
+    );
   }
   
   const duration = ((Date.now() - startTime) / 1000).toFixed(2);
