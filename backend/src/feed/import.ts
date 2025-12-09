@@ -31,6 +31,32 @@ function buildFeedUrl(retailer: Retailer): string {
   return `https://www.partner-ads.com/dk/feed_udlaes.php?partnerid=${PARTNER_ID}&bannerid=${retailer.banner_id}&feedid=${retailer.feed_id}`;
 }
 
+function sanitizeFilename(name: string): string {
+  // Replace invalid filename characters with underscores
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9.-]/g, '_')
+    .replace(/_{2,}/g, '_')
+    .replace(/^_|_$/g, '');
+}
+
+function saveFeedToFile(xmlContent: string, retailerName: string): void {
+  const feedsDir = path.join(__dirname, '../../xml-product-feeds');
+  
+  // Ensure directory exists
+  if (!fs.existsSync(feedsDir)) {
+    fs.mkdirSync(feedsDir, { recursive: true });
+  }
+  
+  // Create filename from retailer name
+  const filename = `${sanitizeFilename(retailerName)}.xml`;
+  const filePath = path.join(feedsDir, filename);
+  
+  // Write the XML content
+  fs.writeFileSync(filePath, xmlContent, 'utf-8');
+  console.log(`  💾 Saved feed to: ${filePath}`);
+}
+
 async function fetchFeed(url: string): Promise<string> {
   return new Promise((resolve, reject) => {
     https.get(new URL(url), res => {
@@ -81,8 +107,11 @@ async function main() {
       console.log(`  🌐 Fetching feed: ${feedUrl}`);
       const xmlContent = await fetchFeed(feedUrl);
 
-      // Parse the feed
-      const products = parseProductFeedFromXml(xmlContent);
+      // Save the raw feed before parsing
+      saveFeedToFile(xmlContent, retailer.name);
+
+      // Parse the feed (pass retailerId for special filtering rules)
+      const products = parseProductFeedFromXml(xmlContent, retailerId);
 
       if (products.length === 0) {
         console.log('  ⚠️  No yarn products found in feed');
@@ -112,8 +141,20 @@ async function main() {
 
   for (const yarn of yarns.rows) {
     if (!yarn.search_query) continue;
+    // Process negative keywords: add % wildcards if not already present
+    // Filter out empty strings first to avoid matching everything
     const neg = yarn.negative_keywords && yarn.negative_keywords.length > 0
       ? yarn.negative_keywords
+          .map(kw => kw.trim())
+          .filter(kw => kw.length > 0) // Remove empty strings
+          .map(kw => {
+            // If keyword doesn't start with %, add it
+            // If keyword doesn't end with %, add it
+            let processed = kw;
+            if (!processed.startsWith('%')) processed = `%${processed}`;
+            if (!processed.endsWith('%')) processed = `${processed}%`;
+            return processed;
+          })
       : [];
 
     // Select cheapest per retailer using DISTINCT ON
@@ -171,6 +212,28 @@ async function main() {
     yarnMatchCounts.set(yarn.yarn_id, aggRows.rowCount ?? 0);
     console.log(`  🧶 Aggregated yarn ${yarn.yarn_id}: inserted ${aggRows.rowCount} rows`);
   }
+
+  // Update yarn.lowest_price_on_the_market based on lowest price_after_discount from product_aggregated
+  console.log('\n💰 Updating lowest prices...');
+  const priceUpdateResult = await pool.query(
+    `
+    UPDATE yarn
+    SET 
+      lowest_price_on_the_market = (
+        SELECT MIN(price_after_discount::numeric)::int
+        FROM product_aggregated
+        WHERE product_aggregated.yarn_id = yarn.yarn_id
+          AND price_after_discount IS NOT NULL
+      ),
+      updated_at = NOW()
+    WHERE yarn_id IN (
+      SELECT DISTINCT yarn_id 
+      FROM product_aggregated 
+      WHERE price_after_discount IS NOT NULL
+    )
+    `
+  );
+  console.log(`  ✅ Updated lowest prices for ${priceUpdateResult.rowCount} yarns`);
 
   // Update yarn.is_active based on whether matches were found
   for (const [yarnId, matchCount] of yarnMatchCounts.entries()) {

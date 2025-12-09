@@ -38,3 +38,4 @@ next-env.d.ts
 # Vercel
 .vercel
 
+/backend/xml-product-feeds

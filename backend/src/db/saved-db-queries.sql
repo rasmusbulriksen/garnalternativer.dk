@@ -32,44 +32,44 @@ insert into yarn (
     created_at,
     updated_at
 ) values (
-    'Drops Alpaca',
-    'Drops Alpaca description',
+    'Drops Soft Tweed',
+    'Drops Soft Tweed description',
     'https://test.com',
     21,
     200,
     22.95,
     0.087,
     true,
-    'drops alpaca',
-    ARRAY['%boucl%', '%brushed%', '%silk%'],
+    'soft tweed',
+    ARRAY['lana', 'grossa'],
     now(),
     now()
 );
 
-insert into yarn (
-    name,
-    description,
-    image_url,
-    tension,
-    skein_length,
-    lowest_price_on_the_market,
-    price_per_meter,
-    is_active,
-    search_query,
-    negative_keywords,
-    created_at,
-    updated_at
-) values (
-    'Filcolana Pernilla',
-    'Filcolana Pernilla description',
-    'https://test.com',
-    21,
-    200,
-    22.95,
-    0.087,
-    true,
-    'pernilla',
-    ARRAY[''],
-    now(),
-    now()
-);
+update yarn set search_query = 'sunday' where yarn_id = 6;
+
+delete from yarn where yarn_id = 15;
+
+truncate table product_aggregated;
+
+select * from yarn;
+
+select * from product_aggregated where yarn_id = 16;
+
+select * from retailer;
+
+-- Remove % wildcards from negative_keywords arrays
+-- This updates all negative_keywords to remove leading and trailing % characters
+-- Also removes empty strings from arrays
+UPDATE yarn y
+SET negative_keywords = (
+  SELECT COALESCE(array_agg(trimmed_kw), ARRAY[]::text[])
+  FROM (
+    SELECT trim(both '%' from kw) as trimmed_kw
+    FROM unnest(y.negative_keywords) AS kw
+    WHERE trim(both '%' from kw) != ''
+  ) AS keywords
+),
+updated_at = NOW()
+WHERE y.negative_keywords IS NOT NULL 
+  AND array_length(y.negative_keywords, 1) > 0;

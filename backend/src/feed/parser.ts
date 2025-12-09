@@ -27,8 +27,10 @@ export interface Product {
 
 /**
  * Parse an XML product feed file and filter for yarn products
+ * @param xmlContent - The XML content to parse
+ * @param retailerId - Optional retailer ID. If 10 (tantegroencph.dk), all products are included regardless of category
  */
-export function parseProductFeedFromXml(xmlContent: string): Product[] {
+export function parseProductFeedFromXml(xmlContent: string, retailerId?: number): Product[] {
   const parser = new XMLParser({
     ignoreAttributes: true,
     parseTagValue: false, // Keep values as strings
@@ -45,10 +47,17 @@ export function parseProductFeedFromXml(xmlContent: string): Product[] {
   
   console.log(`📦 Total products in feed: ${rawProducts.length}`);
   
-  // Filter for yarn products (kategorinavn contains "Garn")
-  const yarnProducts = rawProducts.filter(p =>
-    p.kategorinavn?.toLowerCase().includes('garn')
-  );
+  // Filter for yarn products
+  // Exception: retailer_id = 10 (tantegroencph.dk) - include all products
+  // Otherwise: filter for products where kategorinavn contains "Garn"
+  const yarnProducts = rawProducts.filter(p => {
+    if (retailerId === 10) {
+      // Include all products for tantegroencph.dk
+      return true;
+    }
+    // For other retailers, filter by category containing "Garn"
+    return p.kategorinavn?.toLowerCase().includes('garn');
+  });
   
   console.log(`🧶 Yarn products after filter: ${yarnProducts.length}`);
   

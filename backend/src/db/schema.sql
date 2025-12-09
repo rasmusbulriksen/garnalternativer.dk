@@ -61,12 +61,6 @@ CREATE TABLE IF NOT EXISTS product_imported (
     price_after_discount DECIMAL(10, 2),
     stock_status VARCHAR(255),
     url TEXT NOT NULL,
-    search_tsv tsvector GENERATED ALWAYS AS (
-        to_tsvector(
-            'simple',
-            coalesce(brand, '') || ' ' || coalesce(name, '') || ' ' || coalesce(category, '')
-        )
-    ) STORED,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -93,7 +87,6 @@ CREATE TABLE IF NOT EXISTS product_aggregated (
 -- Helpful indexes
 CREATE INDEX IF NOT EXISTS idx_product_imported_retailer_id ON product_imported(retailer_id);
 CREATE INDEX IF NOT EXISTS idx_product_imported_name ON product_imported(name);
-CREATE INDEX IF NOT EXISTS idx_product_imported_search_tsv ON product_imported USING GIN (search_tsv);
 CREATE INDEX IF NOT EXISTS idx_product_imported_name_trgm ON product_imported USING GIN (name gin_trgm_ops);
 CREATE INDEX IF NOT EXISTS idx_product_imported_brand_trgm ON product_imported USING GIN (brand gin_trgm_ops);
 CREATE INDEX IF NOT EXISTS idx_product_aggregated_yarn_id ON product_aggregated(yarn_id);
