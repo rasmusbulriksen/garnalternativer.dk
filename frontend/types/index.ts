@@ -2,6 +2,9 @@ export interface Retailer {
   name: string;
   url: string;
   price: number;
+  // For double yarns, these URLs are retailer-specific
+  mainYarnUrl?: string;
+  carryAlongYarnUrl?: string;
 }
 
 export interface Pattern {

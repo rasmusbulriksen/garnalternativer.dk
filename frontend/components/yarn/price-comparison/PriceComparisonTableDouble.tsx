@@ -56,7 +56,7 @@ export default function PriceComparisonTableDouble({ yarn, retailers, metersRequ
                                 </span>
                                 <span className="font-bold">{Math.ceil(metersRequired / retailerLineItem.mainYarn.skeinLength) * getYarnSinglePriceForRetailer(retailerLineItem.mainYarn, retailerLineItem.retailer)} DKK</span>
                                 <a
-                                    href={retailerLineItem.mainYarn.dummyUrl}
+                                    href={retailerLineItem.retailer.mainYarnUrl || retailerLineItem.retailer.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="ml-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
@@ -76,7 +76,7 @@ export default function PriceComparisonTableDouble({ yarn, retailers, metersRequ
                                 </span>
                                 <span className="font-bold">{Math.ceil(metersRequired / retailerLineItem.carryAlongYarn.skeinLength) * getYarnSinglePriceForRetailer(retailerLineItem.carryAlongYarn, retailerLineItem.retailer)} DKK</span>
                                 <a
-                                    href={retailerLineItem.carryAlongYarn.dummyUrl}
+                                    href={retailerLineItem.retailer.carryAlongYarnUrl || retailerLineItem.retailer.url || '#'}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="ml-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"

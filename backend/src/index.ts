@@ -142,7 +142,7 @@ app.get('/yarns', async (req, res) => {
           carryRetailersResult.rows.map((r: any) => [r.name, { url: r.url, price: r.price }])
         );
 
-        const combinedRetailers: Array<{ name: string; url: string; price: number }> = [];
+        const combinedRetailers: Array<{ name: string; url: string; mainYarnUrl: string; carryAlongYarnUrl: string; price: number }> = [];
         const retailerNames = new Set([...mainRetailers.keys(), ...carryRetailers.keys()]);
 
         retailerNames.forEach((retailerName) => {
@@ -153,7 +153,9 @@ app.get('/yarns', async (req, res) => {
           if (main && carry) {
             combinedRetailers.push({
               name: retailerName,
-              url: main.url, // Use main yarn's URL
+              url: main.url, // Keep for backward compatibility
+              mainYarnUrl: main.url,
+              carryAlongYarnUrl: carry.url,
               price: main.price + carry.price
             });
           }
@@ -212,6 +214,15 @@ app.get('/yarns', async (req, res) => {
         imagePath = row.image_url;
       }
       
+      // Transform retailers to include mainYarnUrl and carryAlongYarnUrl
+      const transformedRetailers = (row.retailers || []).map((retailer: any) => ({
+        name: retailer.name,
+        url: retailer.url,
+        price: retailer.price,
+        mainYarnUrl: retailer.mainYarnUrl || retailer.url,
+        carryAlongYarnUrl: retailer.carryAlongYarnUrl || retailer.url
+      }));
+      
       return {
         id: id,
         type: 'double' as const,
@@ -220,9 +231,9 @@ app.get('/yarns', async (req, res) => {
         tension: row.tension,
         mainYarnId: mainYarnId,
         carryAlongYarnId: carryYarnId,
-        retailers: row.retailers || [],
-        dummyUrl: row.retailers && row.retailers.length > 0 
-          ? row.retailers[0].url 
+        retailers: transformedRetailers,
+        dummyUrl: transformedRetailers && transformedRetailers.length > 0 
+          ? transformedRetailers[0].url 
           : '#'
       };
     });
