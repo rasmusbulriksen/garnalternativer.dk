@@ -145,6 +145,57 @@ npm install
 npm run dev
 ```
 
+The API will start on `http://localhost:3001` by default (port 3001 to avoid conflict with Next.js frontend).
+
+## API Endpoints
+
+### `GET /health`
+Health check endpoint. Returns database connection status.
+
+### `GET /yarns`
+Returns all active yarns with their retailers and pricing information.
+
+**Response format:**
+```json
+[
+  {
+    "id": "filcolana-alva",
+    "type": "single",
+    "name": "Filcolana Alva",
+    "image": "/yarns/filcolana/single/filcolana-alva.jpg",
+    "tension": 21,
+    "skeinLength": 100,
+    "retailers": [
+      {
+        "name": "Rito.dk",
+        "url": "https://rito.dk/product",
+        "price": 45
+      }
+    ],
+    "dummyUrl": "https://rito.dk/product"
+  }
+]
+```
+
+## Image Storage Pattern
+
+Yarn images are stored in the frontend's `public` directory and referenced by URL path in the database:
+
+1. **Storage Location**: `frontend/public/yarns/{brand}/{type}/{filename}`
+   - Example: `frontend/public/yarns/filcolana/single/filcolana-alva.jpg`
+
+2. **Database Field**: Store the relative path from `public` in the `yarn.image_url` column
+   - Example: `/yarns/filcolana/single/filcolana-alva.jpg`
+
+3. **Frontend Usage**: Next.js Image component automatically serves files from the `public` directory
+   - The path stored in the database can be used directly: `<Image src={yarn.image} />`
+
+4. **Workflow**:
+   - Upload/add image file to `frontend/public/yarns/{brand}/{type}/`
+   - Update `yarn.image_url` in the database with the relative path
+   - The API endpoint `/yarns` returns this path as the `image` field
+   - Frontend displays the image using Next.js Image component
+
 ## Development
 
 For reference, two sample product feeds are available in the `xml-product-feeds-for-dev/` directory:

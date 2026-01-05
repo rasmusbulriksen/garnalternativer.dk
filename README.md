@@ -27,6 +27,27 @@ The user interface, kept as simple (architecturally and visually) as possible.
 - TypeScript
 - TailwindCSS
 
+### Getting Started
+
+1. Navigate to the frontend directory:
+```bash
+cd frontend
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Start the development server:
+```bash
+npm run dev
+```
+
+The frontend will be available at `http://localhost:3000`.
+
+**Note**: The frontend fetches yarn data from the backend API. Make sure the backend is running (see Backend section below).
+
 ## Backend
 
 Consists of two parts:
@@ -41,3 +62,30 @@ Consists of two parts:
 - TypeScript
 - PostgreSQL
 - Docker
+
+### Quick Start
+
+See `backend/README.md` for detailed instructions. Quick setup:
+
+1. Start the database:
+```bash
+docker-compose up -d
+```
+
+2. Navigate to backend directory and install dependencies:
+```bash
+cd backend
+npm install
+```
+
+3. Run the API server:
+```bash
+npm run dev
+```
+
+The API will be available at `http://localhost:3001` (port 3001 to avoid conflict with Next.js frontend).
+
+4. Import product feeds (optional, for initial data):
+```bash
+npm run feed:import
+```
