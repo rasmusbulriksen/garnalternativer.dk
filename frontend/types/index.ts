@@ -1,10 +1,27 @@
+// Retailer entity (matches database retailer table)
 export interface Retailer {
   name: string;
-  url: string;
+}
+
+// A retailer offering a single yarn at a specific price
+export interface SingleYarnOffer {
+  retailer: Retailer;
+  productUrl: string;
   price: number;
-  // For double yarns, these URLs are retailer-specific
-  mainYarnUrl?: string;
-  carryAlongYarnUrl?: string;
+}
+
+// A retailer offering both component yarns of a double yarn
+export interface DoubleYarnOffer {
+  retailer: Retailer;
+  mainYarn: {
+    productUrl: string;
+    price: number;
+  };
+  carryAlongYarn: {
+    productUrl: string;
+    price: number;
+  };
+  combinedPrice: number;
 }
 
 export interface Pattern {

@@ -172,7 +172,7 @@ Returns all active yarns with their retailers and pricing information.
         "price": 45
       }
     ],
-    "dummyUrl": "https://rito.dk/product"
+    "url": "https://rito.dk/product"
   }
 ]
 ```

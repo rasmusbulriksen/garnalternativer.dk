@@ -1,10 +1,10 @@
 import type { YarnDouble, YarnSingle } from "@/types/yarn";
-import type { Retailer } from "@/types";
-import { calculateTotalPriceForRetailer, getYarnSingleByIdOrThrow, getYarnSinglePriceForRetailer } from "@/lib/yarn";
+import type { DoubleYarnOffer } from "@/types";
+import { getYarnSingleByIdOrThrow } from "@/lib/yarn";
 import Image from "next/image";
 
-interface RetailerLineItem {
-    retailer: Retailer;
+interface Row {
+    offer: DoubleYarnOffer;
     mainYarn: YarnSingle;
     carryAlongYarn: YarnSingle;
     totalPrice: number;
@@ -12,88 +12,99 @@ interface RetailerLineItem {
 
 interface Props {
     yarn: YarnDouble;
-    retailers: Retailer[];
+    offers: DoubleYarnOffer[];
     metersRequired: number;
 }
 
-export default function PriceComparisonTableDouble({ yarn, retailers, metersRequired }: Props) {
+export default function PriceComparisonTableDouble({ yarn, offers, metersRequired }: Props) {
+    const mainYarn = getYarnSingleByIdOrThrow(yarn.mainYarnId);
+    const carryAlongYarn = getYarnSingleByIdOrThrow(yarn.carryAlongYarnId);
 
-    // Cheapest first
-    const retailerLineItems: RetailerLineItem[] = retailers.sort((a, b) => calculateTotalPriceForRetailer(yarn, metersRequired, a) - calculateTotalPriceForRetailer(yarn, metersRequired, b)).map((retailer) => {
+    // Calculate total price for each offer and sort cheapest first
+    const rows: Row[] = offers.map((offer) => {
+        const mainYarnSkeinsNeeded = Math.ceil(metersRequired / mainYarn.skeinLength);
+        const carryAlongYarnSkeinsNeeded = Math.ceil(metersRequired / carryAlongYarn.skeinLength);
+        const totalPrice = (offer.mainYarn.price * mainYarnSkeinsNeeded) + (offer.carryAlongYarn.price * carryAlongYarnSkeinsNeeded);
+        
         return {
-            retailer: retailer,
-            mainYarn: getYarnSingleByIdOrThrow(yarn.mainYarnId),
-            carryAlongYarn: getYarnSingleByIdOrThrow(yarn.carryAlongYarnId),
-            totalPrice: calculateTotalPriceForRetailer(yarn, metersRequired, retailer),
+            offer: offer,
+            mainYarn: mainYarn,
+            carryAlongYarn: carryAlongYarn,
+            totalPrice: totalPrice,
         };
-    });
+    }).sort((a, b) => a.totalPrice - b.totalPrice);
 
     return (
         <div className="p-6">
             <div className="space-y-3">
-                {retailerLineItems.map((retailerLineItem, index) => (
-                    <div
-                        key={retailerLineItem.retailer.name}
-                        className={`p-4 rounded-lg border-2 ${index === 0 ? 'border-green-500 bg-green-50' : 'border-gray-200'}`}
-                    >
-                        {/* Retailer */}
-                        <div className="flex items-center gap-3 mb-3">
-                            <span className="font-medium text-lg">{retailerLineItem.retailer.name}</span>
-                            {index === 0 && (
-                                <span className="bg-green-500 text-white text-xs px-2 py-1 rounded">
-                                    Cheapest
-                                </span>
-                            )}
-                        </div>
-
-                        {/* Main Yarn */}
-                        <div className="flex items-center justify-between py-2 pl-4 border-l-2 border-gray-300">
-                            <Image src={retailerLineItem.mainYarn.image} alt={retailerLineItem.mainYarn.name} width={50} height={50} className="rounded-lg object-cover" />
-                            <span className="text-sm text-gray-700">{retailerLineItem.mainYarn.name}</span>
-                            <div className="flex items-center gap-2">
-                                <span className="text-gray-500">
-                                    {Math.ceil(metersRequired / retailerLineItem.mainYarn.skeinLength)} x {getYarnSinglePriceForRetailer(retailerLineItem.mainYarn, retailerLineItem.retailer)} =
-                                </span>
-                                <span className="font-bold">{Math.ceil(metersRequired / retailerLineItem.mainYarn.skeinLength) * getYarnSinglePriceForRetailer(retailerLineItem.mainYarn, retailerLineItem.retailer)} DKK</span>
-                                <a
-                                    href={retailerLineItem.retailer.mainYarnUrl || retailerLineItem.retailer.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="ml-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-                                >
-                                    Buy
-                                </a>
+                {rows.map((row, index) => {
+                    const mainYarnSkeinsNeeded = Math.ceil(metersRequired / row.mainYarn.skeinLength);
+                    const carryAlongYarnSkeinsNeeded = Math.ceil(metersRequired / row.carryAlongYarn.skeinLength);
+                    
+                    return (
+                        <div
+                            key={row.offer.retailer.name}
+                            className={`p-4 rounded-lg border-2 ${index === 0 ? 'border-green-500 bg-green-50' : 'border-gray-200'}`}
+                        >
+                            {/* Retailer */}
+                            <div className="flex items-center gap-3 mb-3">
+                                <span className="font-medium text-lg">{row.offer.retailer.name}</span>
+                                {index === 0 && (
+                                    <span className="bg-green-500 text-white text-xs px-2 py-1 rounded">
+                                        Cheapest
+                                    </span>
+                                )}
                             </div>
-                        </div>
 
-                        {/* Carry-along Yarn */}
-                        <div className="flex items-center justify-between py-2 pl-4 border-l-2 border-gray-300">
-                            <Image src={retailerLineItem.carryAlongYarn.image} alt={retailerLineItem.carryAlongYarn.name} width={50} height={50} className="rounded-lg object-cover" />
-                            <span className="text-sm text-gray-700">{retailerLineItem.carryAlongYarn.name}</span>
-                            <div className="flex items-center gap-2">
-                                <span className="text-gray-500">
-                                    {Math.ceil(metersRequired / retailerLineItem.carryAlongYarn.skeinLength)} x {getYarnSinglePriceForRetailer(retailerLineItem.carryAlongYarn, retailerLineItem.retailer)} =
-                                </span>
-                                <span className="font-bold">{Math.ceil(metersRequired / retailerLineItem.carryAlongYarn.skeinLength) * getYarnSinglePriceForRetailer(retailerLineItem.carryAlongYarn, retailerLineItem.retailer)} DKK</span>
-                                <a
-                                    href={retailerLineItem.retailer.carryAlongYarnUrl || retailerLineItem.retailer.url || '#'}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="ml-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-                                >
-                                    Buy
-                                </a>
+                            {/* Main Yarn */}
+                            <div className="flex items-center justify-between py-2 pl-4 border-l-2 border-gray-300">
+                                <Image src={row.mainYarn.image} alt={row.mainYarn.name} width={50} height={50} className="rounded-lg object-cover" />
+                                <span className="text-sm text-gray-700">{row.mainYarn.name}</span>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-gray-500">
+                                        {mainYarnSkeinsNeeded} x {row.offer.mainYarn.price} =
+                                    </span>
+                                    <span className="font-bold">{row.offer.mainYarn.price * mainYarnSkeinsNeeded} DKK</span>
+                                    <a
+                                        href={row.offer.mainYarn.productUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="ml-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                                    >
+                                        Buy
+                                    </a>
+                                </div>
                             </div>
-                        </div>
 
-                        {/* Total */}
-                        <div className="flex items-center justify-between pt-3 mt-2 border-t border-gray-300">
-                            <span className="font-medium">Total</span>
-                            <span className="font-bold text-lg">{calculateTotalPriceForRetailer(yarn, metersRequired, retailerLineItem.retailer)} DKK</span>
-                        </div>
+                            {/* Carry-along Yarn */}
+                            <div className="flex items-center justify-between py-2 pl-4 border-l-2 border-gray-300">
+                                <Image src={row.carryAlongYarn.image} alt={row.carryAlongYarn.name} width={50} height={50} className="rounded-lg object-cover" />
+                                <span className="text-sm text-gray-700">{row.carryAlongYarn.name}</span>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-gray-500">
+                                        {carryAlongYarnSkeinsNeeded} x {row.offer.carryAlongYarn.price} =
+                                    </span>
+                                    <span className="font-bold">{row.offer.carryAlongYarn.price * carryAlongYarnSkeinsNeeded} DKK</span>
+                                    <a
+                                        href={row.offer.carryAlongYarn.productUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="ml-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                                    >
+                                        Buy
+                                    </a>
+                                </div>
+                            </div>
 
-                    </div>
-                ))}
+                            {/* Total */}
+                            <div className="flex items-center justify-between pt-3 mt-2 border-t border-gray-300">
+                                <span className="font-medium">Total</span>
+                                <span className="font-bold text-lg">{row.totalPrice} DKK</span>
+                            </div>
+
+                        </div>
+                    );
+                })}
             </div>
         </div >
     );

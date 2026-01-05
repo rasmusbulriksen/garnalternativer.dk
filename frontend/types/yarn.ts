@@ -1,4 +1,4 @@
-import type { Retailer } from ".";
+import type { SingleYarnOffer, DoubleYarnOffer } from ".";
 
 interface YarnBase {
     id: string;
@@ -10,14 +10,14 @@ interface YarnBase {
 export interface YarnSingle extends YarnBase {
     type: YarnType.Single;
     skeinLength: number;
-    retailers: Retailer[];
-    dummyUrl: string;
+    offers: SingleYarnOffer[];
 }
 
 export interface YarnDouble extends YarnBase {
     type: YarnType.Double;
     mainYarnId: string;
     carryAlongYarnId: string;
+    offers: DoubleYarnOffer[];
 }
 
 export type Yarn = YarnSingle | YarnDouble;

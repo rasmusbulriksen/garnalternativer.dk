@@ -6,7 +6,7 @@
     "image": "/yarns/filcolana/single/filcolana-alva.jpg",
     "skeinLength": 100,
     "tension": 21,
-    "dummyUrl": "https://rito.dk/173-drops-lima",
+    "url": "https://rito.dk/173-drops-lima",
     "retailers": [
       {
         "name": "Hobbii.dk",
@@ -27,7 +27,7 @@
     "image": "/yarns/filcolana/single/filcolana-merci.avif",
     "skeinLength": 120,
     "tension": 21,
-    "dummyUrl": "https://rito.dk/173-drops-lima",
+    "url": "https://rito.dk/173-drops-lima",
     "retailers": [
       {
         "name": "Hobbii.dk",
@@ -48,7 +48,7 @@
     "image": "/yarns/filcolana/single/filcolana-pernilla.webp",
     "skeinLength": 95,
     "tension": 21,
-    "dummyUrl": "https://rito.dk/173-drops-lima",
+    "url": "https://rito.dk/173-drops-lima",
     "retailers": [
       {
         "name": "Hobbii.dk",
@@ -69,7 +69,7 @@
     "image": "/yarns/rauma/single/rauma-fivel.webp",
     "skeinLength": 110,
     "tension": 21,
-    "dummyUrl": "https://rito.dk/173-drops-lima",
+    "url": "https://rito.dk/173-drops-lima",
     "retailers": [
       {
         "name": "Hobbii.dk",
@@ -90,7 +90,7 @@
     "image": "/yarns/sandnes/single/sandnes-double-sunday.webp",
     "skeinLength": 150,
     "tension": 21,
-    "dummyUrl": "https://rito.dk/173-drops-lima",
+    "url": "https://rito.dk/173-drops-lima",
     "retailers": [
       {
         "name": "Hobbii.dk",
@@ -111,7 +111,7 @@
     "image": "/yarns/sandnes/single/sandnes-line.webp",
     "skeinLength": 90,
     "tension": 20,
-    "dummyUrl": "https://rito.dk/173-drops-lima",
+    "url": "https://rito.dk/173-drops-lima",
     "retailers": [
       {
         "name": "Hobbii.dk",
@@ -132,7 +132,7 @@
     "image": "/yarns/sandnes/single/sandnes-sunday.webp",
     "skeinLength": 105,
     "tension": 20,
-    "dummyUrl": "https://rito.dk/173-drops-lima",
+    "url": "https://rito.dk/173-drops-lima",
     "retailers": [
       {
         "name": "Hobbii.dk",
@@ -153,7 +153,7 @@
     "image": "/yarns/sandnes/single/sandnes-tynn-silk-mohair.png",
     "skeinLength": 100,
     "tension": 20,
-    "dummyUrl": "https://rito.dk/173-drops-lima",
+    "url": "https://rito.dk/173-drops-lima",
     "retailers": [
       {
         "name": "Hobbii.dk",
@@ -174,7 +174,7 @@
     "image": "/yarns/navia/single/navia-uno.png",
     "skeinLength": 100,
     "tension": 20,
-    "dummyUrl": "https://rito.dk/173-drops-lima",
+    "url": "https://rito.dk/173-drops-lima",
     "retailers": [
       {
         "name": "Hobbii.dk",
@@ -195,7 +195,7 @@
     "image": "/yarns/navia/single/navia-alpakka.png",
     "skeinLength": 100,
     "tension": 20,
-    "dummyUrl": "https://rito.dk/173-drops-lima",
+    "url": "https://rito.dk/173-drops-lima",
     "retailers": [
       {
         "name": "Hobbii.dk",

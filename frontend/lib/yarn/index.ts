@@ -1,9 +1,3 @@
-/*
-Barrel file
-Re-export for easy imports. i.e:
-import { getYarnSingleByIdOrThrow, getYarnSinglePriceForRetailer } from "@/lib/yarn";
-*/
-
 // Data access
 export {
     getYarnSingleByIdOrThrow,
@@ -16,14 +10,12 @@ export {
 
 // Pricing functions
 export {
-    getYarnSinglePriceForRetailer,
     getLowestUnitPriceAvailable,
-    calculateTotalPriceForRetailer,
     getLowestTotalPriceAvailable,
 } from "@/lib/yarn/yarn-pricing";
 
 // Utility functions
 export {
     getYarnSkeinLength,
-    getYarnRetailers,
+    getYarnOffers,
 } from "@/lib/yarn/yarn-utils";

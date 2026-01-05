@@ -1,4 +1,4 @@
-import type { Retailer } from "@/types";
+import type { SingleYarnOffer, DoubleYarnOffer } from "@/types";
 import type { Yarn } from "@/types/yarn";
 import { getYarnSingleByIdOrThrow } from "./yarn-repository";
 
@@ -15,13 +15,11 @@ export function getYarnSkeinLength(yarn: Yarn): number {
     }
 }
 
-export function getYarnRetailers(yarn: Yarn): Retailer[] {
+export function getYarnOffers(yarn: Yarn): SingleYarnOffer[] | DoubleYarnOffer[] {
     if (yarn.type === "single") {
-        return yarn.retailers;
+        return yarn.offers;
     } else {
-        // For double yarns, use the retailers directly from the yarn object
-        // These retailers already have mainYarnUrl and carryAlongYarnUrl set by the backend API
-        return yarn.retailers;
+        return yarn.offers;
     }
 }
 

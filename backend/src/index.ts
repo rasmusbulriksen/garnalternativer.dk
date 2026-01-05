@@ -142,7 +142,12 @@ app.get('/yarns', async (req, res) => {
           carryRetailersResult.rows.map((r: any) => [r.name, { url: r.url, price: r.price }])
         );
 
-        const combinedRetailers: Array<{ name: string; url: string; mainYarnUrl: string; carryAlongYarnUrl: string; price: number }> = [];
+        const combinedOffers: Array<{
+          retailer: { name: string };
+          mainYarn: { productUrl: string; price: number };
+          carryAlongYarn: { productUrl: string; price: number };
+          combinedPrice: number;
+        }> = [];
         const retailerNames = new Set([...mainRetailers.keys(), ...carryRetailers.keys()]);
 
         retailerNames.forEach((retailerName) => {
@@ -151,22 +156,27 @@ app.get('/yarns', async (req, res) => {
           
           // Only include retailers where both component yarns are available
           if (main && carry) {
-            combinedRetailers.push({
-              name: retailerName,
-              url: main.url, // Keep for backward compatibility
-              mainYarnUrl: main.url,
-              carryAlongYarnUrl: carry.url,
-              price: main.price + carry.price
+            combinedOffers.push({
+              retailer: { name: retailerName },
+              mainYarn: {
+                productUrl: main.url,
+                price: main.price
+              },
+              carryAlongYarn: {
+                productUrl: carry.url,
+                price: carry.price
+              },
+              combinedPrice: main.price + carry.price
             });
           }
         });
 
         // Sort by combined price
-        combinedRetailers.sort((a, b) => a.price - b.price);
+        combinedOffers.sort((a, b) => a.combinedPrice - b.combinedPrice);
 
         return {
           ...doubleYarn,
-          retailers: combinedRetailers,
+          offers: combinedOffers,
           mainYarnName: yarnIdToName.get(doubleYarn.main_yarn_id) || '',
           carryYarnName: yarnIdToName.get(doubleYarn.carry_along_yarn_id) || ''
         };
@@ -185,6 +195,16 @@ app.get('/yarns', async (req, res) => {
         imagePath = row.image_url;
       }
       
+      // Transform retailers to SingleYarnOffer format
+      const offers = (row.retailers && row.retailers.length > 0 
+        ? row.retailers.filter((r: any) => r.name && r.price)
+        : []
+      ).map((r: any) => ({
+        retailer: { name: r.name },
+        productUrl: r.url,
+        price: r.price
+      }));
+      
       return {
         id: id,
         type: 'single' as const,
@@ -192,12 +212,8 @@ app.get('/yarns', async (req, res) => {
         image: imagePath,
         tension: row.tension,
         skeinLength: row.skein_length,
-        retailers: row.retailers && row.retailers.length > 0 
-          ? row.retailers.filter((r: any) => r.name && r.price) 
-          : [],
-        dummyUrl: row.retailers && row.retailers.length > 0 
-          ? row.retailers[0].url 
-          : '#'
+        offers: offers,
+        url: offers.length > 0 ? offers[0].productUrl : '#'
       };
     });
 
@@ -214,15 +230,6 @@ app.get('/yarns', async (req, res) => {
         imagePath = row.image_url;
       }
       
-      // Transform retailers to include mainYarnUrl and carryAlongYarnUrl
-      const transformedRetailers = (row.retailers || []).map((retailer: any) => ({
-        name: retailer.name,
-        url: retailer.url,
-        price: retailer.price,
-        mainYarnUrl: retailer.mainYarnUrl || retailer.url,
-        carryAlongYarnUrl: retailer.carryAlongYarnUrl || retailer.url
-      }));
-      
       return {
         id: id,
         type: 'double' as const,
@@ -231,10 +238,7 @@ app.get('/yarns', async (req, res) => {
         tension: row.tension,
         mainYarnId: mainYarnId,
         carryAlongYarnId: carryYarnId,
-        retailers: transformedRetailers,
-        dummyUrl: transformedRetailers && transformedRetailers.length > 0 
-          ? transformedRetailers[0].url 
-          : '#'
+        offers: row.offers || []
       };
     });
 

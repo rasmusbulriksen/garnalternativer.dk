@@ -4,7 +4,7 @@ import Image from "next/image";
 import type { Yarn } from "@/types/yarn";
 import type { Pattern } from "@/types";
 import { SizeEnum } from "@/types/user-preferences";
-import { getYarnRetailers, getYarnSkeinLength } from "@/lib/yarn";
+import { getYarnSkeinLength } from "@/lib/yarn";
 import PriceComparisonTable from "@/components/yarn/price-comparison/PriceComparisonTable";
 
 interface Props {
@@ -24,7 +24,6 @@ export default function PriceComparisonPopup({
 }: Props) {
   const skeinLength = getYarnSkeinLength(yarn);
   const skeinsNeeded = Math.ceil(metersRequired / skeinLength);
-  const retailers = getYarnRetailers(yarn);
 
   return (
     <div
@@ -77,7 +76,6 @@ export default function PriceComparisonPopup({
 
         <PriceComparisonTable 
           yarn={yarn}
-          retailers={retailers}
           metersRequired={metersRequired}
         />
       </div>

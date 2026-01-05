@@ -19,3 +19,19 @@ When making changes to database schema, import logic, or data flow:
 
 - Changes to aggregation logic, yarn matching, or feed processing should be documented in `backend/diagrams/import-sequence.md`
 - Keep sequence diagrams accurate to the actual code execution order
+
+## Error Handling and Fallbacks
+
+- **NEVER create fallback logic or default values** - it's better to throw an error
+- If data is missing or invalid, throw an explicit error rather than using fallbacks, defaults, or empty arrays/objects
+- Prefer `throw new Error()` over `return null`, `return []`, `return {}`, or `return defaultValue`
+- Let errors bubble up rather than silently handling them with fallbacks
+- The human is responsible for strategic decisions about error handling - don't add fallbacks "just in case"
+
+## Backward Compatibility
+
+- **NEVER maintain backward compatibility** unless explicitly requested
+- When refactoring or changing APIs, update all call sites immediately
+- Remove deprecated code, old interfaces, and legacy fields immediately
+- Don't add compatibility layers, adapters, or migration helpers unless explicitly requested
+- The human is responsible for strategic decisions about compatibility - don't maintain old patterns "for compatibility"
