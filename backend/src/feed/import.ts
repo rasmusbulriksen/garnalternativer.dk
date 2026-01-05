@@ -235,6 +235,25 @@ async function main() {
   );
   console.log(`  ✅ Updated lowest prices for ${priceUpdateResult.rowCount} yarns`);
 
+  // Update yarn.price_per_meter based on lowest_price_on_the_market / skein_length
+  console.log('\n📏 Calculating price per meter...');
+  const pricePerMeterResult = await pool.query(
+    `
+    UPDATE yarn
+    SET 
+      price_per_meter = CASE
+        WHEN skein_length IS NOT NULL AND skein_length > 0 AND lowest_price_on_the_market IS NOT NULL
+        THEN (lowest_price_on_the_market::numeric / skein_length::numeric)
+        ELSE NULL
+      END,
+      updated_at = NOW()
+    WHERE lowest_price_on_the_market IS NOT NULL
+      AND skein_length IS NOT NULL
+      AND skein_length > 0
+    `
+  );
+  console.log(`  ✅ Updated price per meter for ${pricePerMeterResult.rowCount} yarns`);
+
   // Update yarn.is_active based on whether matches were found
   for (const [yarnId, matchCount] of yarnMatchCounts.entries()) {
     const hasMatches = matchCount > 0;
