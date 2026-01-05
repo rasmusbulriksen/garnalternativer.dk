@@ -1,6 +1,4 @@
 import type { YarnSingle, YarnDouble, Yarn } from "@/types/yarn";
-import yarnDoublesData from "@/data/yarn-doubles.json";
-import yarnSinglesData from "@/data/yarn-singles.json";
 
 // Backend API URL - defaults to port 3001 to avoid conflict with Next.js
 const BACKEND_API_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:3001';
@@ -9,10 +7,6 @@ const BACKEND_API_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://local
 let cachedYarns: Yarn[] | null = null;
 let cachedYarnSingles: YarnSingle[] | null = null;
 let cachedYarnDoubles: YarnDouble[] | null = null;
-
-// Fallback to JSON data if backend yarns aren't available
-const fallbackYarnSingles = yarnSinglesData as YarnSingle[];
-const fallbackYarnDoubles = yarnDoublesData as YarnDouble[];
 
 // Fetch yarns from backend API (returns both single and double yarns)
 async function fetchYarnsFromBackend(): Promise<Yarn[]> {
@@ -25,32 +19,24 @@ async function fetchYarnsFromBackend(): Promise<Yarn[]> {
         return data as Yarn[];
     } catch (error) {
         console.error('Error fetching yarns from backend:', error);
-        // Return empty array - will fall back to JSON files
+        // Return empty array - app only uses database data
         return [];
     }
 }
 
-// Get all yarns from backend (with caching), fallback to JSON if backend unavailable
+// Get all yarns from backend (with caching)
 async function getAllYarnsFromBackend(): Promise<Yarn[]> {
     if (cachedYarns === null) {
         const backendYarns = await fetchYarnsFromBackend();
-        // If backend returned yarns, use them; otherwise fall back to JSON
-        if (backendYarns.length > 0) {
-            cachedYarns = backendYarns;
-            // Separate into singles and doubles for easier lookup
-            cachedYarnSingles = backendYarns.filter((y): y is YarnSingle => y.type === 'single');
-            cachedYarnDoubles = backendYarns.filter((y): y is YarnDouble => y.type === 'double');
-        } else {
-            console.warn('Backend returned no yarns, using JSON fallback');
-            cachedYarns = [...fallbackYarnSingles, ...fallbackYarnDoubles];
-            cachedYarnSingles = fallbackYarnSingles;
-            cachedYarnDoubles = fallbackYarnDoubles;
-        }
+        cachedYarns = backendYarns;
+        // Separate into singles and doubles for easier lookup
+        cachedYarnSingles = backendYarns.filter((y): y is YarnSingle => y.type === 'single');
+        cachedYarnDoubles = backendYarns.filter((y): y is YarnDouble => y.type === 'double');
     }
     return cachedYarns;
 }
 
-// Get yarn singles from backend (with caching), fallback to JSON if backend unavailable
+// Get yarn singles from backend (with caching)
 async function getYarnSingles(): Promise<YarnSingle[]> {
     if (cachedYarnSingles === null) {
         await getAllYarnsFromBackend();
@@ -66,7 +52,7 @@ export function clearYarnCache(): void {
 }
 
 export function getYarnSingleByIdOrThrow(id: string): YarnSingle {
-    // First, try to find in backend cache
+    // Find in backend cache
     if (cachedYarnSingles !== null) {
         const yarn = cachedYarnSingles.find((yarn) => yarn.id === id);
         if (yarn) {
@@ -74,18 +60,12 @@ export function getYarnSingleByIdOrThrow(id: string): YarnSingle {
         }
     }
     
-    // Fallback to JSON data if not found in backend (useful for double yarns that reference yarns not yet in DB)
-    const fallbackYarn = fallbackYarnSingles.find((yarn) => yarn.id === id);
-    if (fallbackYarn) {
-        return fallbackYarn;
-    }
-    
-    // If still not found, throw error
-    throw new Error(`Yarn not found: ${id}. Make sure the yarn exists in the database or JSON files.`);
+    // If not found, throw error
+    throw new Error(`Yarn not found: ${id}. Make sure the yarn exists in the database.`);
 }
 
 export function getYarnDoubleByIdOrThrow(id: string): YarnDouble {
-    // First, try to find in backend cache
+    // Find in backend cache
     if (cachedYarnDoubles !== null) {
         const yarn = cachedYarnDoubles.find((yarn) => yarn.id === id);
         if (yarn) {
@@ -93,13 +73,8 @@ export function getYarnDoubleByIdOrThrow(id: string): YarnDouble {
         }
     }
     
-    // Fallback to JSON data
-    const fallbackYarn = fallbackYarnDoubles.find((yarn) => yarn.id === id);
-    if (fallbackYarn) {
-        return fallbackYarn;
-    }
-    
-    throw new Error(`Yarn not found: ${id}`);
+    // If not found, throw error
+    throw new Error(`Yarn not found: ${id}. Make sure the yarn exists in the database.`);
 }
 
 export async function getAllYarnSinglesOrThrow(): Promise<YarnSingle[]> {
