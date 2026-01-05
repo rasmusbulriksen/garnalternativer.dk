@@ -235,7 +235,66 @@ async function main() {
   );
   console.log(`  ✅ Updated lowest prices for ${priceUpdateResult.rowCount} yarns`);
 
+  // Update double yarn prices and activation based on component yarns
+  console.log('\n🧶 Processing double yarns...');
+  const doubleYarnsResult = await pool.query(`
+    SELECT 
+      y.yarn_id,
+      y.main_yarn_id,
+      y.carry_along_yarn_id
+    FROM yarn y
+    WHERE y.yarn_type = 'double'
+  `);
+
+  const doubleYarnUpdates = new Map<number, { hasRetailer: boolean; lowestPrice: number | null }>();
+
+  for (const doubleYarn of doubleYarnsResult.rows) {
+    // Find retailers that have BOTH component yarns in stock
+    const retailersWithBothResult = await pool.query(`
+      SELECT 
+        main_pa.retailer_id,
+        main_pa.price_after_discount::numeric as main_price,
+        carry_pa.price_after_discount::numeric as carry_price,
+        (main_pa.price_after_discount::numeric + carry_pa.price_after_discount::numeric)::int as combined_price
+      FROM product_aggregated main_pa
+      INNER JOIN product_aggregated carry_pa ON main_pa.retailer_id = carry_pa.retailer_id
+      WHERE main_pa.yarn_id = $1
+        AND carry_pa.yarn_id = $2
+        AND main_pa.stock_status = 'in stock'
+        AND carry_pa.stock_status = 'in stock'
+        AND main_pa.price_after_discount IS NOT NULL
+        AND carry_pa.price_after_discount IS NOT NULL
+      ORDER BY combined_price ASC
+    `, [doubleYarn.main_yarn_id, doubleYarn.carry_along_yarn_id]);
+
+    const hasRetailer = retailersWithBothResult.rows.length > 0;
+    const lowestPrice = hasRetailer 
+      ? retailersWithBothResult.rows[0].combined_price 
+      : null;
+
+    doubleYarnUpdates.set(doubleYarn.yarn_id, { hasRetailer, lowestPrice });
+  }
+
+  // Update double yarn prices and activation status
+  for (const [yarnId, update] of doubleYarnUpdates.entries()) {
+    await pool.query(
+      `
+      UPDATE yarn
+      SET 
+        lowest_price_on_the_market = $1,
+        is_active = $2,
+        active_since = CASE WHEN $2 = TRUE AND active_since IS NULL THEN NOW() ELSE active_since END,
+        inactive_since = CASE WHEN $2 = FALSE THEN NOW() ELSE inactive_since END,
+        updated_at = NOW()
+      WHERE yarn_id = $3
+      `,
+      [update.lowestPrice, update.hasRetailer, yarnId]
+    );
+  }
+  console.log(`  ✅ Processed ${doubleYarnUpdates.size} double yarns`);
+
   // Update yarn.price_per_meter based on lowest_price_on_the_market / skein_length
+  // This now includes both single and double yarns
   console.log('\n📏 Calculating price per meter...');
   const pricePerMeterResult = await pool.query(
     `
@@ -254,7 +313,7 @@ async function main() {
   );
   console.log(`  ✅ Updated price per meter for ${pricePerMeterResult.rowCount} yarns`);
 
-  // Update yarn.is_active based on whether matches were found
+  // Update yarn.is_active based on whether matches were found (for single yarns only)
   for (const [yarnId, matchCount] of yarnMatchCounts.entries()) {
     const hasMatches = matchCount > 0;
     await pool.query(
@@ -266,6 +325,7 @@ async function main() {
         inactive_since = CASE WHEN $1 = FALSE THEN NOW() ELSE inactive_since END,
         updated_at = NOW()
       WHERE yarn_id = $2
+        AND yarn_type = 'single'
       `,
       [hasMatches, yarnId]
     );

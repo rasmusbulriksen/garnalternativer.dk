@@ -4,6 +4,9 @@
 -- Extensions
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
+-- Yarn type enum
+CREATE TYPE yarn_type AS ENUM ('single', 'double');
+
 -- Retailers
 CREATE TABLE IF NOT EXISTS retailer (
     retailer_id SERIAL PRIMARY KEY,
@@ -17,7 +20,7 @@ CREATE TABLE IF NOT EXISTS retailer (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Canonical yarns
+-- Canonical yarns (both single and double)
 CREATE TABLE IF NOT EXISTS yarn (
     yarn_id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL UNIQUE,
@@ -27,13 +30,21 @@ CREATE TABLE IF NOT EXISTS yarn (
     skein_length INT,
     lowest_price_on_the_market INT,
     price_per_meter DECIMAL(10, 4),
+    yarn_type yarn_type DEFAULT 'single' NOT NULL,
+    main_yarn_id INT REFERENCES yarn(yarn_id),
+    carry_along_yarn_id INT REFERENCES yarn(yarn_id),
     is_active BOOLEAN DEFAULT TRUE,
     search_query TEXT,
     negative_keywords TEXT[],
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     active_since TIMESTAMP WITH TIME ZONE,
-    inactive_since TIMESTAMP WITH TIME ZONE
+    inactive_since TIMESTAMP WITH TIME ZONE,
+    -- Constraint: double yarns must reference two different single yarns
+    CONSTRAINT double_yarn_components CHECK (
+        (yarn_type = 'single' AND main_yarn_id IS NULL AND carry_along_yarn_id IS NULL) OR
+        (yarn_type = 'double' AND main_yarn_id IS NOT NULL AND carry_along_yarn_id IS NOT NULL AND main_yarn_id != carry_along_yarn_id)
+    )
 );
 
 -- Patterns (matched to yarns via tension)
@@ -92,4 +103,7 @@ CREATE INDEX IF NOT EXISTS idx_product_imported_brand_trgm ON product_imported U
 CREATE INDEX IF NOT EXISTS idx_product_aggregated_yarn_id ON product_aggregated(yarn_id);
 CREATE INDEX IF NOT EXISTS idx_product_aggregated_retailer_id ON product_aggregated(retailer_id);
 CREATE INDEX IF NOT EXISTS idx_yarn_tension ON yarn(tension);
+CREATE INDEX IF NOT EXISTS idx_yarn_type ON yarn(yarn_type);
+CREATE INDEX IF NOT EXISTS idx_yarn_main_yarn_id ON yarn(main_yarn_id);
+CREATE INDEX IF NOT EXISTS idx_yarn_carry_along_yarn_id ON yarn(carry_along_yarn_id);
 

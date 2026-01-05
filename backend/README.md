@@ -226,3 +226,60 @@ Retailers are configured in `retailers.json`:
 ```
 
 Feed URL format: `https://www.partner-ads.com/dk/feed_udlaes.php?partnerid=46912&bannerid=XXXXX&feedid=XXX`
+
+## Double Yarns
+
+Double yarns are combinations of two single yarns (e.g., "Navia Uno og Navia Alpakka"). They are stored in the same `yarn` table with `yarn_type = 'double'` and reference two single yarns via `main_yarn_id` and `carry_along_yarn_id`.
+
+### Migration
+
+To add double yarn support to an existing database, run:
+
+```bash
+npm run db:migrate-double-yarns
+```
+
+This will:
+- Create the `yarn_type` enum
+- Add `yarn_type`, `main_yarn_id`, and `carry_along_yarn_id` columns
+- Add constraints to ensure data integrity
+- Mark all existing yarns as type 'single'
+
+### Adding a Double Yarn
+
+See `backend/src/db/example-insert-double-yarn.sql` for an example. The key points:
+
+1. Both component single yarns must exist in the database first
+2. Double yarns don't have direct `product_aggregated` entries
+3. Pricing is calculated dynamically by combining retailers from both component yarns
+4. Only retailers that have both component yarns available are included
+
+Example:
+
+```sql
+INSERT INTO yarn (
+    name,
+    yarn_type,
+    image_url,
+    tension,
+    skein_length,
+    main_yarn_id,
+    carry_along_yarn_id,
+    is_active
+) VALUES (
+    'Navia Uno og Navia Alpakka',
+    'double',
+    '/yarns/navia/double/navia-uno-og-alpakka.jpg',
+    20,
+    (SELECT skein_length FROM yarn WHERE name = 'Navia Uno'),
+    (SELECT yarn_id FROM yarn WHERE name = 'Navia Uno'),
+    (SELECT yarn_id FROM yarn WHERE name = 'Navia Alpakka'),
+    TRUE
+);
+```
+
+### API Behavior
+
+The `/yarns` endpoint returns both single and double yarns:
+- **Single yarns**: Include retailers directly from `product_aggregated`
+- **Double yarns**: Combine retailers from both component yarns, summing prices and only including retailers where both yarns are available

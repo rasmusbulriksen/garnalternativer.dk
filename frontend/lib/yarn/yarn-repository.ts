@@ -6,48 +6,64 @@ import yarnSinglesData from "@/data/yarn-singles.json";
 const BACKEND_API_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:3001';
 
 // Cache for yarns fetched from backend
+let cachedYarns: Yarn[] | null = null;
 let cachedYarnSingles: YarnSingle[] | null = null;
+let cachedYarnDoubles: YarnDouble[] | null = null;
 
 // Fallback to JSON data if backend yarns aren't available
 const fallbackYarnSingles = yarnSinglesData as YarnSingle[];
+const fallbackYarnDoubles = yarnDoublesData as YarnDouble[];
 
-// Fetch yarns from backend API
-async function fetchYarnsFromBackend(): Promise<YarnSingle[]> {
+// Fetch yarns from backend API (returns both single and double yarns)
+async function fetchYarnsFromBackend(): Promise<Yarn[]> {
     try {
         const response = await fetch(`${BACKEND_API_URL}/yarns`);
         if (!response.ok) {
             throw new Error(`Failed to fetch yarns: ${response.statusText}`);
         }
         const data = await response.json();
-        return data as YarnSingle[];
+        return data as Yarn[];
     } catch (error) {
         console.error('Error fetching yarns from backend:', error);
-        // Return empty array - will fall back to JSON files in getYarnSingles
+        // Return empty array - will fall back to JSON files
         return [];
     }
+}
+
+// Get all yarns from backend (with caching), fallback to JSON if backend unavailable
+async function getAllYarnsFromBackend(): Promise<Yarn[]> {
+    if (cachedYarns === null) {
+        const backendYarns = await fetchYarnsFromBackend();
+        // If backend returned yarns, use them; otherwise fall back to JSON
+        if (backendYarns.length > 0) {
+            cachedYarns = backendYarns;
+            // Separate into singles and doubles for easier lookup
+            cachedYarnSingles = backendYarns.filter((y): y is YarnSingle => y.type === 'single');
+            cachedYarnDoubles = backendYarns.filter((y): y is YarnDouble => y.type === 'double');
+        } else {
+            console.warn('Backend returned no yarns, using JSON fallback');
+            cachedYarns = [...fallbackYarnSingles, ...fallbackYarnDoubles];
+            cachedYarnSingles = fallbackYarnSingles;
+            cachedYarnDoubles = fallbackYarnDoubles;
+        }
+    }
+    return cachedYarns;
 }
 
 // Get yarn singles from backend (with caching), fallback to JSON if backend unavailable
 async function getYarnSingles(): Promise<YarnSingle[]> {
     if (cachedYarnSingles === null) {
-        const backendYarns = await fetchYarnsFromBackend();
-        // If backend returned yarns, use them; otherwise fall back to JSON
-        if (backendYarns.length > 0) {
-            cachedYarnSingles = backendYarns;
-        } else {
-            console.warn('Backend returned no yarns, using JSON fallback');
-            cachedYarnSingles = fallbackYarnSingles;
-        }
+        await getAllYarnsFromBackend();
     }
-    return cachedYarnSingles;
+    return cachedYarnSingles || [];
 }
 
 // Clear cache (useful for development/testing)
 export function clearYarnCache(): void {
+    cachedYarns = null;
     cachedYarnSingles = null;
+    cachedYarnDoubles = null;
 }
-
-const yarnDoubles = yarnDoublesData as YarnDouble[];
 
 export function getYarnSingleByIdOrThrow(id: string): YarnSingle {
     // First, try to find in backend cache
@@ -69,11 +85,21 @@ export function getYarnSingleByIdOrThrow(id: string): YarnSingle {
 }
 
 export function getYarnDoubleByIdOrThrow(id: string): YarnDouble {
-    const yarn = yarnDoubles.find((yarn) => yarn.id === id);
-    if (!yarn) {
-        throw new Error(`Yarn not found: ${id}`);
+    // First, try to find in backend cache
+    if (cachedYarnDoubles !== null) {
+        const yarn = cachedYarnDoubles.find((yarn) => yarn.id === id);
+        if (yarn) {
+            return yarn;
+        }
     }
-    return yarn;
+    
+    // Fallback to JSON data
+    const fallbackYarn = fallbackYarnDoubles.find((yarn) => yarn.id === id);
+    if (fallbackYarn) {
+        return fallbackYarn;
+    }
+    
+    throw new Error(`Yarn not found: ${id}`);
 }
 
 export async function getAllYarnSinglesOrThrow(): Promise<YarnSingle[]> {
@@ -84,24 +110,28 @@ export async function getAllYarnSinglesOrThrow(): Promise<YarnSingle[]> {
     return yarns;
 }
 
-export function getAllYarnDoublesOrThrow(): YarnDouble[] {
-    if (yarnDoubles.length === 0) {
+export async function getAllYarnDoublesOrThrow(): Promise<YarnDouble[]> {
+    if (cachedYarnDoubles === null) {
+        await getAllYarnsFromBackend();
+    }
+    const doubles = cachedYarnDoubles || [];
+    if (doubles.length === 0) {
         throw new Error("No yarns found");
     }
-    return yarnDoubles;
+    return doubles;
 }
 
 export async function getAllYarnsOrThrow(): Promise<Yarn[]> {
-    const singles = await getYarnSingles();
-    if (singles.length === 0 && yarnDoubles.length === 0) {
+    const allYarns = await getAllYarnsFromBackend();
+    if (allYarns.length === 0) {
         throw new Error("No yarns found");
     }
-    return [...singles, ...yarnDoubles];
+    return allYarns;
 }
 
 // Async version that fetches from backend
 export async function getAllYarnsAsync(): Promise<Yarn[]> {
-    const singles = await getYarnSingles();
-    return [...singles, ...yarnDoubles];
+    return await getAllYarnsFromBackend();
 }
+
 

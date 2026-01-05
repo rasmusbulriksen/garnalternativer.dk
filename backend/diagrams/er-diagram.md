@@ -47,6 +47,9 @@ erDiagram
         int skein_length
         int lowest_price_on_the_market
         decimal price_per_meter
+        enum yarn_type
+        int main_yarn_id FK
+        int carry_along_yarn_id FK
         boolean is_active
         text search_query
         text[] negative_keywords
@@ -71,6 +74,7 @@ erDiagram
     product_imported ||--o{ product_aggregated : "is aggregated <br>cheapest-per-retailer"
     retailer ||--o{ product_imported : "sells"
     retailer ||--o{ product_aggregated : "sells"
-    yarn ||--o{ product_aggregated : "activated/deactivated <br> by searching in"
+    yarn ||--o{ product_aggregated : "single yarns have <br>product_aggregated entries"
+    yarn ||--o{ yarn : "double yarns reference <br>two single yarns"
     pattern ||--o{ yarn : "matches by tension"
 ```

@@ -5,3 +5,6 @@
 - Mayflower Easy Care Classic Tweed
 - Hjertegarn Lima
 - Drops Soft Tweed
+- Navia Uno
+- Navia Alpakka
+- Navia Uno & Navia Alpakka
