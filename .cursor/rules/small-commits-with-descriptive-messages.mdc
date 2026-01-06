@@ -1,0 +1,29 @@
+---
+alwaysApply: true
+---
+After completing a logical unit of work or making a set of related changes, always:
+
+1. **Stage the changed files** using `git add` for the specific files that were modified
+2. **Write a descriptive commit message** that clearly explains what was changed and why
+3. **Commit the changes** with `git commit`
+4. **Push to remote** with `git push` to keep the remote repository up to date
+
+**Commit Message Guidelines:**
+- Use clear, descriptive messages in the format: "What: Brief description of the change"
+- Be specific about what was changed (e.g., "Add admin page for creating yarns" not just "Update files")
+- Include context when helpful (e.g., "Fix price aggregation to use discounted prices")
+- Keep commits focused on a single logical change or feature
+
+**When to Commit:**
+- After completing a feature or fix
+- After making a set of related changes
+- After refactoring a specific component or function
+- After adding tests for a feature
+- After updating documentation
+
+**Avoid:**
+- Large commits with multiple unrelated changes
+- Generic commit messages like "Update" or "Fix"
+- Committing without pushing (always push after committing)
+
+This ensures a clean, readable git history with small, focused commits that are easy to review and understand.

@@ -1,0 +1,1 @@
+Commit the changes with the command `git commit -m "What: Brief description of the change"` and push to the remote repository with the command `git push`.
