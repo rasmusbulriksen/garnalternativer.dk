@@ -1,6 +1,7 @@
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert';
 import { pool } from '../db/index.js';
+import { isInStock } from './stock-status.js';
 
 describe('Double Yarn Activation Logic', () => {
   let testRetailerId1: number;
@@ -72,19 +73,22 @@ describe('Double Yarn Activation Logic', () => {
         main_pa.retailer_id,
         main_pa.price_after_discount::numeric as main_price,
         carry_pa.price_after_discount::numeric as carry_price,
+        main_pa.stock_status as main_stock_status,
+        carry_pa.stock_status as carry_stock_status,
         (main_pa.price_after_discount::numeric + carry_pa.price_after_discount::numeric)::int as combined_price
       FROM product_aggregated main_pa
       INNER JOIN product_aggregated carry_pa ON main_pa.retailer_id = carry_pa.retailer_id
       WHERE main_pa.yarn_id = $1
         AND carry_pa.yarn_id = $2
-        AND main_pa.stock_status = 'in stock'
-        AND carry_pa.stock_status = 'in stock'
         AND main_pa.price_after_discount IS NOT NULL
         AND carry_pa.price_after_discount IS NOT NULL
       ORDER BY combined_price ASC
     `, [mainYarnId, carryAlongYarnId]);
 
-    return retailersWithBothResult.rows.length > 0;
+    // Filter to only include those where both are in stock (handles different stock status formats)
+    return retailersWithBothResult.rows.some(row => 
+      isInStock(row.main_stock_status) && isInStock(row.carry_stock_status)
+    );
   }
 
   async function updateDoubleYarnStatus(hasRetailer: boolean) {

@@ -6,6 +6,7 @@ import { URL } from 'url';
 import { pool } from '../db/index.js';
 import { parseProductFeedFromXml } from './parser.js';
 import { importProducts, ensureRetailer } from './importer.js';
+import { isInStock } from './stock-status.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -276,26 +277,34 @@ async function main() {
 
   for (const doubleYarn of doubleYarnsResult.rows) {
     // Find retailers that have BOTH component yarns in stock
+    // Note: We fetch all matching retailers first, then filter by stock status in code
+    // to handle different stock status formats ('in stock', 'in_stock', numeric values, etc.)
     const retailersWithBothResult = await pool.query(`
       SELECT 
         main_pa.retailer_id,
         main_pa.price_after_discount::numeric as main_price,
         carry_pa.price_after_discount::numeric as carry_price,
+        main_pa.stock_status as main_stock_status,
+        carry_pa.stock_status as carry_stock_status,
         (main_pa.price_after_discount::numeric + carry_pa.price_after_discount::numeric)::int as combined_price
       FROM product_aggregated main_pa
       INNER JOIN product_aggregated carry_pa ON main_pa.retailer_id = carry_pa.retailer_id
       WHERE main_pa.yarn_id = $1
         AND carry_pa.yarn_id = $2
-        AND main_pa.stock_status = 'in stock'
-        AND carry_pa.stock_status = 'in stock'
         AND main_pa.price_after_discount IS NOT NULL
         AND carry_pa.price_after_discount IS NOT NULL
       ORDER BY combined_price ASC
     `, [doubleYarn.main_yarn_id, doubleYarn.carry_along_yarn_id]);
 
-    const hasRetailer = retailersWithBothResult.rows.length > 0;
+    // Filter to only include retailers where both yarns are actually in stock
+    // This handles different stock status formats ('in stock', 'in_stock', numeric values, etc.)
+    const retailersWithBothInStock = retailersWithBothResult.rows.filter(row => 
+      isInStock(row.main_stock_status) && isInStock(row.carry_stock_status)
+    );
+
+    const hasRetailer = retailersWithBothInStock.length > 0;
     const lowestPrice = hasRetailer 
-      ? retailersWithBothResult.rows[0].combined_price 
+      ? retailersWithBothInStock[0].combined_price 
       : null;
 
     doubleYarnUpdates.set(doubleYarn.yarn_id, { hasRetailer, lowestPrice });
