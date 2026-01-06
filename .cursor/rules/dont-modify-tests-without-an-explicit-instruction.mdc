@@ -1,0 +1,5 @@
+---
+alwaysApply: true
+---
+
+If you are not explicitly asked to modify a test, do not modify it. The reason being that tests is a guard against unexpected changes to the code and they must only be modified if the human programmer has explicitly asked for it.

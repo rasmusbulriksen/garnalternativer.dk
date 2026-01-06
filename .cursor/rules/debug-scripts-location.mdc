@@ -1,0 +1,11 @@
+---
+alwaysApply: true
+---
+When creating debugging scripts, temporary scripts, or one-off utility scripts for debugging purposes, always place them in the `backend/temp-debug-scripts/` directory. This includes:
+
+- Debug scripts for inspecting database data
+- Temporary scripts for testing queries
+- One-off scripts for troubleshooting
+- Scripts for debugging specific issues
+
+Do NOT place debugging scripts in `backend/src/db/` or other source directories. Keep the source code directories clean and organized by placing all temporary debugging scripts in `backend/temp-debug-scripts/`.

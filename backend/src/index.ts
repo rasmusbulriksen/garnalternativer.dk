@@ -45,6 +45,219 @@ app.get('/products/retailer/:retailer', async (req, res) => {
   }
 });
 
+// Get all yarns (simple list for admin dropdowns)
+app.get('/yarns/all', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT yarn_id, name, yarn_type
+      FROM yarn
+      WHERE is_active = TRUE AND yarn_type = 'single'
+      ORDER BY name
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching all yarns:', error);
+    res.status(500).json({ error: 'Failed to fetch yarns' });
+  }
+});
+
+// Create a new yarn
+app.post('/yarns', async (req, res) => {
+  try {
+    const {
+      name,
+      description,
+      image_url,
+      tension,
+      skein_length,
+      lowest_price_on_the_market,
+      price_per_meter,
+      yarn_type,
+      main_yarn_id,
+      carry_along_yarn_id,
+      is_active,
+      search_query,
+      negative_keywords
+    } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ error: 'Name is required' });
+    }
+
+    if (yarn_type === 'double') {
+      if (!main_yarn_id || !carry_along_yarn_id) {
+        return res.status(400).json({ error: 'main_yarn_id and carry_along_yarn_id are required for double yarns' });
+      }
+      if (main_yarn_id === carry_along_yarn_id) {
+        return res.status(400).json({ error: 'main_yarn_id and carry_along_yarn_id must be different' });
+      }
+    }
+
+    const result = await pool.query(`
+      INSERT INTO yarn (
+        name,
+        description,
+        image_url,
+        tension,
+        skein_length,
+        lowest_price_on_the_market,
+        price_per_meter,
+        yarn_type,
+        main_yarn_id,
+        carry_along_yarn_id,
+        is_active,
+        search_query,
+        negative_keywords,
+        active_since
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, CASE WHEN $11 = TRUE THEN NOW() ELSE NULL END)
+      RETURNING yarn_id, name, yarn_type, created_at
+    `, [
+      name,
+      description || null,
+      image_url || null,
+      tension || null,
+      skein_length || null,
+      lowest_price_on_the_market || null,
+      price_per_meter || null,
+      yarn_type || 'single',
+      yarn_type === 'double' ? main_yarn_id : null,
+      yarn_type === 'double' ? carry_along_yarn_id : null,
+      is_active !== undefined ? is_active : true,
+      search_query || null,
+      negative_keywords && Array.isArray(negative_keywords) ? negative_keywords : null
+    ]);
+
+    res.status(201).json({
+      success: true,
+      yarn: result.rows[0]
+    });
+  } catch (error: any) {
+    console.error('Error creating yarn:', error);
+    if (error.code === '23505') {
+      return res.status(409).json({ error: 'A yarn with this name already exists' });
+    }
+    if (error.code === '23503') {
+      return res.status(400).json({ error: 'Invalid yarn_id reference for main_yarn_id or carry_along_yarn_id' });
+    }
+    res.status(500).json({ error: 'Failed to create yarn', details: error.message });
+  }
+});
+
+// Update a yarn
+app.put('/yarns/:id', async (req, res) => {
+  try {
+    const yarnId = parseInt(req.params.id);
+    if (isNaN(yarnId)) {
+      return res.status(400).json({ error: 'Invalid yarn ID' });
+    }
+
+    const {
+      name,
+      description,
+      image_url,
+      tension,
+      skein_length,
+      lowest_price_on_the_market,
+      price_per_meter,
+      main_yarn_id,
+      carry_along_yarn_id,
+      is_active,
+      search_query,
+      negative_keywords
+    } = req.body;
+
+    const updates: string[] = [];
+    const values: any[] = [];
+    let paramCount = 1;
+
+    if (name !== undefined) {
+      updates.push(`name = $${paramCount++}`);
+      values.push(name);
+    }
+    if (description !== undefined) {
+      updates.push(`description = $${paramCount++}`);
+      values.push(description || null);
+    }
+    if (image_url !== undefined) {
+      updates.push(`image_url = $${paramCount++}`);
+      values.push(image_url || null);
+    }
+    if (tension !== undefined) {
+      updates.push(`tension = $${paramCount++}`);
+      values.push(tension ? parseInt(tension) : null);
+    }
+    if (skein_length !== undefined) {
+      updates.push(`skein_length = $${paramCount++}`);
+      values.push(skein_length ? parseInt(skein_length) : null);
+    }
+    if (lowest_price_on_the_market !== undefined) {
+      updates.push(`lowest_price_on_the_market = $${paramCount++}`);
+      values.push(lowest_price_on_the_market ? parseInt(lowest_price_on_the_market) : null);
+    }
+    if (price_per_meter !== undefined) {
+      updates.push(`price_per_meter = $${paramCount++}`);
+      values.push(price_per_meter ? parseFloat(price_per_meter) : null);
+    }
+    if (main_yarn_id !== undefined) {
+      updates.push(`main_yarn_id = $${paramCount++}`);
+      values.push(main_yarn_id ? parseInt(main_yarn_id) : null);
+    }
+    if (carry_along_yarn_id !== undefined) {
+      updates.push(`carry_along_yarn_id = $${paramCount++}`);
+      values.push(carry_along_yarn_id ? parseInt(carry_along_yarn_id) : null);
+    }
+    if (is_active !== undefined) {
+      updates.push(`is_active = $${paramCount++}`);
+      values.push(is_active);
+      if (is_active) {
+        updates.push(`active_since = CASE WHEN active_since IS NULL THEN NOW() ELSE active_since END`);
+      } else {
+        updates.push(`inactive_since = CASE WHEN inactive_since IS NULL THEN NOW() ELSE inactive_since END`);
+      }
+    }
+    if (search_query !== undefined) {
+      updates.push(`search_query = $${paramCount++}`);
+      values.push(search_query || null);
+    }
+    if (negative_keywords !== undefined) {
+      updates.push(`negative_keywords = $${paramCount++}`);
+      values.push(negative_keywords && Array.isArray(negative_keywords) ? negative_keywords : null);
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ error: 'No fields to update' });
+    }
+
+    updates.push(`updated_at = NOW()`);
+    values.push(yarnId);
+
+    const result = await pool.query(`
+      UPDATE yarn 
+      SET ${updates.join(', ')}
+      WHERE yarn_id = $${paramCount}
+      RETURNING yarn_id, name, yarn_type, is_active, updated_at
+    `, values);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Yarn not found' });
+    }
+
+    res.json({
+      success: true,
+      yarn: result.rows[0]
+    });
+  } catch (error: any) {
+    console.error('Error updating yarn:', error);
+    if (error.code === '23505') {
+      return res.status(409).json({ error: 'A yarn with this name already exists' });
+    }
+    if (error.code === '23503') {
+      return res.status(400).json({ error: 'Invalid yarn_id reference for main_yarn_id or carry_along_yarn_id' });
+    }
+    res.status(500).json({ error: 'Failed to update yarn', details: error.message });
+  }
+});
+
 // Get all yarns with retailers and pricing
 app.get('/yarns', async (req, res) => {
   try {

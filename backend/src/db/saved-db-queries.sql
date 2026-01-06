@@ -73,3 +73,71 @@ SET negative_keywords = (
 updated_at = NOW()
 WHERE y.negative_keywords IS NOT NULL 
   AND array_length(y.negative_keywords, 1) > 0;
+
+-- Debug: Check product prices for a specific retailer and product
+-- Example: Check Drops Flora from kreamok.dk
+SELECT 
+  pi.product_imported_id,
+  pi.retailers_product_id,
+  pi.brand,
+  pi.name,
+  pi.price_before_discount,
+  pi.price_after_discount,
+  pi.stock_status,
+  pi.url,
+  r.name as retailer_name
+FROM product_imported pi
+JOIN retailer r ON pi.retailer_id = r.retailer_id
+WHERE r.name ILIKE '%kreamok%'
+  AND pi.name ILIKE '%flora%'
+ORDER BY pi.price_after_discount ASC NULLS LAST;
+
+-- Debug: Check aggregated products for a specific retailer and product
+SELECT 
+  pa.product_aggregated_id,
+  pa.product_imported_id,
+  pa.yarn_id,
+  y.name as yarn_name,
+  pa.brand,
+  pa.name,
+  pa.price_before_discount,
+  pa.price_after_discount,
+  pa.stock_status,
+  pa.url,
+  r.name as retailer_name
+FROM product_aggregated pa
+JOIN retailer r ON pa.retailer_id = r.retailer_id
+LEFT JOIN yarn y ON pa.yarn_id = y.yarn_id
+WHERE r.name ILIKE '%kreamok%'
+  AND pa.name ILIKE '%flora%'
+ORDER BY pa.price_after_discount ASC NULLS LAST;
+
+-- Debug: Check what the API would return for a specific product
+SELECT 
+  y.yarn_id,
+  y.name as yarn_name,
+  r.name as retailer_name,
+  pa.url,
+  pa.price_after_discount::int as price,
+  pa.price_before_discount::int as original_price
+FROM yarn y
+LEFT JOIN product_aggregated pa ON y.yarn_id = pa.yarn_id
+LEFT JOIN retailer r ON pa.retailer_id = r.retailer_id
+WHERE r.name ILIKE '%kreamok%'
+  AND pa.name ILIKE '%flora%'
+  AND pa.price_after_discount IS NOT NULL
+ORDER BY pa.price_after_discount ASC;
+
+-- Debug: Check all products from a retailer with NULL price_after_discount
+SELECT 
+  pi.product_imported_id,
+  pi.name,
+  pi.price_before_discount,
+  pi.price_after_discount,
+  r.name as retailer_name
+FROM product_imported pi
+JOIN retailer r ON pi.retailer_id = r.retailer_id
+WHERE r.name ILIKE '%kreamok%'
+  AND pi.price_after_discount IS NULL
+  AND pi.price_before_discount IS NOT NULL
+ORDER BY pi.name;

@@ -1,0 +1,4 @@
+---
+alwaysApply: true
+---
+This is a personal project and we are not concerned with backward maintainability. So when we for instance do refactorings, be aggressive when removing the code that we no longer need.

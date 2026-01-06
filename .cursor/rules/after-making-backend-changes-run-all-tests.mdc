@@ -1,0 +1,4 @@
+---
+alwaysApply: true
+---
+After making changes to the backend, run all tests to ensure that the changes have not broken anything. With the command `npm test`.

@@ -97,7 +97,7 @@ export default function PriceComparisonTableDouble({ yarn, offers, metersRequire
                             </div>
 
                             {/* Total */}
-                            <div className="flex items-center justify-between pt-3 mt-2 border-t border-gray-300">
+                            <div className="flex items-center justify-between pt-3 mt-2 border-gray-300">
                                 <span className="font-medium">Total</span>
                                 <span className="font-bold text-lg">{row.totalPrice} DKK</span>
                             </div>

@@ -1,0 +1,4 @@
+---
+alwaysApply: true
+---
+It is always better to throw an explicit exception than to return a fallback or default value. Fallbacks and defaults do nothing else than hide the problems. We want to bring the problems out in the open as early as possible.

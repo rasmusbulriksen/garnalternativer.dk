@@ -203,7 +203,8 @@ async function main() {
       FROM product_imported pi
       WHERE pi.name ILIKE $2
         AND ($3::text[] IS NULL OR array_length($3::text[], 1) IS NULL OR NOT (pi.name ILIKE ANY ($3::text[])))
-      ORDER BY pi.retailer_id, pi.price_after_discount ASC NULLS LAST, pi.product_imported_id ASC
+        AND pi.price_after_discount IS NOT NULL
+      ORDER BY pi.retailer_id, pi.price_after_discount ASC, pi.product_imported_id ASC
       RETURNING *;
       `,
       [yarn.yarn_id, `%${yarn.search_query}%`, neg.length > 0 ? neg : null]
