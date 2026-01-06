@@ -52,6 +52,7 @@ erDiagram
         int carry_along_yarn_id FK
         boolean is_active
         text search_query
+        text[] search_fields
         text[] negative_keywords
         timestamp created_at
         timestamp updated_at

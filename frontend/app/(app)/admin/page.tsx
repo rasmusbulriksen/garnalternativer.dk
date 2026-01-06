@@ -34,6 +34,7 @@ export default function AdminPage() {
     carry_along_yarn_id: '',
     is_active: true,
     search_query: '',
+    search_fields: ['name'] as string[],
     negative_keywords: ''
   });
 
@@ -124,6 +125,7 @@ export default function AdminPage() {
         yarn_type: yarnType,
         is_active: formData.is_active,
         search_query: formData.search_query || null,
+        search_fields: formData.search_fields && formData.search_fields.length > 0 ? formData.search_fields : null,
         negative_keywords: formData.negative_keywords 
           ? formData.negative_keywords.split(',').map(kw => kw.trim()).filter(kw => kw.length > 0)
           : null
@@ -162,6 +164,7 @@ export default function AdminPage() {
         carry_along_yarn_id: '',
         is_active: true,
         search_query: '',
+        search_fields: ['name'],
         negative_keywords: ''
       });
       
@@ -427,6 +430,45 @@ export default function AdminPage() {
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
             placeholder="Search terms for matching products"
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2">
+            Search Fields (default: name only)
+          </label>
+          <div className="space-y-2">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={formData.search_fields.includes('name')}
+                onChange={(e) => handleSearchFieldsChange('name', e.target.checked)}
+                className="mr-2"
+                disabled
+              />
+              <span className="text-sm">Name (always included)</span>
+            </label>
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={formData.search_fields.includes('brand')}
+                onChange={(e) => handleSearchFieldsChange('brand', e.target.checked)}
+                className="mr-2"
+              />
+              <span className="text-sm">Brand</span>
+            </label>
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={formData.search_fields.includes('category')}
+                onChange={(e) => handleSearchFieldsChange('category', e.target.checked)}
+                className="mr-2"
+              />
+              <span className="text-sm">Category</span>
+            </label>
+          </div>
+          <p className="text-sm text-gray-500 mt-1">
+            Select which fields to search. Products match if ANY selected field contains the search query.
+          </p>
         </div>
 
         <div>

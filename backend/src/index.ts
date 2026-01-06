@@ -77,6 +77,7 @@ app.post('/yarns', async (req, res) => {
       carry_along_yarn_id,
       is_active,
       search_query,
+      search_fields,
       negative_keywords
     } = req.body;
 
@@ -107,9 +108,10 @@ app.post('/yarns', async (req, res) => {
         carry_along_yarn_id,
         is_active,
         search_query,
+        search_fields,
         negative_keywords,
         active_since
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, CASE WHEN $11 = TRUE THEN NOW() ELSE NULL END)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, CASE WHEN $11 = TRUE THEN NOW() ELSE NULL END)
       RETURNING yarn_id, name, yarn_type, created_at
     `, [
       name,
@@ -124,6 +126,7 @@ app.post('/yarns', async (req, res) => {
       yarn_type === 'double' ? carry_along_yarn_id : null,
       is_active !== undefined ? is_active : true,
       search_query || null,
+      search_fields && Array.isArray(search_fields) && search_fields.length > 0 ? search_fields : null,
       negative_keywords && Array.isArray(negative_keywords) ? negative_keywords : null
     ]);
 
@@ -163,6 +166,7 @@ app.put('/yarns/:id', async (req, res) => {
       carry_along_yarn_id,
       is_active,
       search_query,
+      search_fields,
       negative_keywords
     } = req.body;
 
@@ -218,6 +222,10 @@ app.put('/yarns/:id', async (req, res) => {
     if (search_query !== undefined) {
       updates.push(`search_query = $${paramCount++}`);
       values.push(search_query || null);
+    }
+    if (search_fields !== undefined) {
+      updates.push(`search_fields = $${paramCount++}`);
+      values.push(search_fields && Array.isArray(search_fields) && search_fields.length > 0 ? search_fields : null);
     }
     if (negative_keywords !== undefined) {
       updates.push(`negative_keywords = $${paramCount++}`);

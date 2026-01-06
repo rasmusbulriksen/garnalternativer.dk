@@ -134,8 +134,9 @@ async function main() {
   const yarns = await pool.query<{
     yarn_id: number;
     search_query: string | null;
+    search_fields: string[] | null;
     negative_keywords: string[] | null;
-  }>(`SELECT yarn_id, search_query, negative_keywords FROM yarn WHERE search_query IS NOT NULL`);
+  }>(`SELECT yarn_id, search_query, search_fields, negative_keywords FROM yarn WHERE search_query IS NOT NULL`);
 
   const yarnMatchCounts = new Map<number, number>();
 
@@ -156,6 +157,33 @@ async function main() {
             return processed;
           })
       : [];
+
+    // Determine which fields to search
+    // Default to name-only if search_fields is NULL or empty (backward compatibility)
+    // Valid fields: 'name', 'brand', 'category'
+    const searchFields = yarn.search_fields && yarn.search_fields.length > 0
+      ? yarn.search_fields.map(f => f.toLowerCase().trim()).filter(f => ['name', 'brand', 'category'].includes(f))
+      : ['name']; // Default to name-only search
+
+    // Build WHERE clause for multi-field search
+    // Always include name search, optionally add brand and category
+    const searchConditions: string[] = [];
+    const searchPattern = `%${yarn.search_query}%`;
+    
+    if (searchFields.includes('name')) {
+      searchConditions.push('pi.name ILIKE $2');
+    }
+    if (searchFields.includes('brand')) {
+      searchConditions.push('pi.brand ILIKE $2');
+    }
+    if (searchFields.includes('category')) {
+      searchConditions.push('pi.category ILIKE $2');
+    }
+
+    // Combine conditions with OR - product matches if ANY field matches
+    const whereClause = searchConditions.length > 0 
+      ? `(${searchConditions.join(' OR ')})`
+      : 'pi.name ILIKE $2'; // Fallback to name-only if somehow no fields selected
 
     // Select cheapest per retailer using DISTINCT ON
     const aggRows = await pool.query<{
@@ -201,13 +229,13 @@ async function main() {
         NOW(),
         NOW()
       FROM product_imported pi
-      WHERE pi.name ILIKE $2
+      WHERE ${whereClause}
         AND ($3::text[] IS NULL OR array_length($3::text[], 1) IS NULL OR NOT (pi.name ILIKE ANY ($3::text[])))
         AND pi.price_after_discount IS NOT NULL
       ORDER BY pi.retailer_id, pi.price_after_discount ASC, pi.product_imported_id ASC
       RETURNING *;
       `,
-      [yarn.yarn_id, `%${yarn.search_query}%`, neg.length > 0 ? neg : null]
+      [yarn.yarn_id, searchPattern, neg.length > 0 ? neg : null]
     );
 
     yarnMatchCounts.set(yarn.yarn_id, aggRows.rowCount ?? 0);
