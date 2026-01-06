@@ -163,20 +163,31 @@ async function main() {
     // - Always search name with search_query
     // - Optionally search all fields (name, brand, category) with expanded_search_query
     // Product matches if: (name matches search_query) OR (any field matches expanded_search_query if provided)
+    // Normalize hyphens/spaces so "kid silk" matches "kid-silk" and vice versa
     const searchConditions: string[] = [];
     const queryParams: any[] = [];
     let paramIndex = 2; // $1 is yarn_id
     
-    // Name search always uses search_query
-    searchConditions.push(`pi.name ILIKE $${paramIndex}`);
-    queryParams.push(`%${yarn.search_query}%`);
+    // Helper function to escape regex special characters and normalize spaces/hyphens
+    const normalizeSearchTerm = (term: string): string => {
+      // Escape special regex characters except spaces and hyphens (which we'll normalize)
+      const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      // Replace spaces with pattern that matches both spaces and hyphens
+      // This allows "kid silk" to match "kid-silk" and "kid silk"
+      return escaped.replace(/\s+/g, '[\\s-]+');
+    };
+    
+    // Name search always uses search_query (with normalized spaces/hyphens)
+    const normalizedSearchQuery = normalizeSearchTerm(yarn.search_query);
+    searchConditions.push(`pi.name ~* $${paramIndex}`);
+    queryParams.push(normalizedSearchQuery);
     paramIndex++;
     
     // Expanded search: if expanded_search_query is provided, search it across all fields
     if (yarn.expanded_search_query) {
-      const expandedPattern = `%${yarn.expanded_search_query}%`;
-      searchConditions.push(`(pi.name ILIKE $${paramIndex} OR pi.brand ILIKE $${paramIndex} OR pi.category ILIKE $${paramIndex})`);
-      queryParams.push(expandedPattern);
+      const normalizedExpandedQuery = normalizeSearchTerm(yarn.expanded_search_query);
+      searchConditions.push(`(pi.name ~* $${paramIndex} OR pi.brand ~* $${paramIndex} OR pi.category ~* $${paramIndex})`);
+      queryParams.push(normalizedExpandedQuery);
       paramIndex++;
     }
 
