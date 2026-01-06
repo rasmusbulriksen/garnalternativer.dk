@@ -77,7 +77,7 @@ app.post('/yarns', async (req, res) => {
       carry_along_yarn_id,
       is_active,
       search_query,
-      search_fields,
+      expanded_search_query,
       negative_keywords
     } = req.body;
 
@@ -92,7 +92,12 @@ app.post('/yarns', async (req, res) => {
       if (main_yarn_id === carry_along_yarn_id) {
         return res.status(400).json({ error: 'main_yarn_id and carry_along_yarn_id must be different' });
       }
+      // Double yarns start as inactive - import script will activate them if retailers have both component yarns
+      // Override any is_active value from the form
     }
+    
+    // For double yarns, always start as inactive (import script will activate if retailers have both component yarns)
+    const finalIsActive = yarn_type === 'double' ? false : (is_active !== undefined ? is_active : true);
 
     const result = await pool.query(`
       INSERT INTO yarn (
@@ -108,7 +113,7 @@ app.post('/yarns', async (req, res) => {
         carry_along_yarn_id,
         is_active,
         search_query,
-        search_fields,
+        expanded_search_query,
         negative_keywords,
         active_since
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, CASE WHEN $11 = TRUE THEN NOW() ELSE NULL END)
@@ -124,9 +129,9 @@ app.post('/yarns', async (req, res) => {
       yarn_type || 'single',
       yarn_type === 'double' ? main_yarn_id : null,
       yarn_type === 'double' ? carry_along_yarn_id : null,
-      is_active !== undefined ? is_active : true,
+      finalIsActive,
       search_query || null,
-      search_fields && Array.isArray(search_fields) && search_fields.length > 0 ? search_fields : null,
+      expanded_search_query || null,
       negative_keywords && Array.isArray(negative_keywords) ? negative_keywords : null
     ]);
 
@@ -166,7 +171,7 @@ app.put('/yarns/:id', async (req, res) => {
       carry_along_yarn_id,
       is_active,
       search_query,
-      search_fields,
+      expanded_search_query,
       negative_keywords
     } = req.body;
 
@@ -223,9 +228,9 @@ app.put('/yarns/:id', async (req, res) => {
       updates.push(`search_query = $${paramCount++}`);
       values.push(search_query || null);
     }
-    if (search_fields !== undefined) {
-      updates.push(`search_fields = $${paramCount++}`);
-      values.push(search_fields && Array.isArray(search_fields) && search_fields.length > 0 ? search_fields : null);
+    if (expanded_search_query !== undefined) {
+      updates.push(`expanded_search_query = $${paramCount++}`);
+      values.push(expanded_search_query || null);
     }
     if (negative_keywords !== undefined) {
       updates.push(`negative_keywords = $${paramCount++}`);

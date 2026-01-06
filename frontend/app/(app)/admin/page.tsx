@@ -34,7 +34,7 @@ export default function AdminPage() {
     carry_along_yarn_id: '',
     is_active: true,
     search_query: '',
-    search_fields: ['name'] as string[],
+    expanded_search_query: '',
     negative_keywords: ''
   });
 
@@ -70,6 +70,7 @@ export default function AdminPage() {
     const value = e.target.value;
     setFormData(prev => ({ ...prev, negative_keywords: value }));
   };
+
 
   const handleActivateYarn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,7 +126,7 @@ export default function AdminPage() {
         yarn_type: yarnType,
         is_active: formData.is_active,
         search_query: formData.search_query || null,
-        search_fields: formData.search_fields && formData.search_fields.length > 0 ? formData.search_fields : null,
+        expanded_search_query: formData.expanded_search_query || null,
         negative_keywords: formData.negative_keywords 
           ? formData.negative_keywords.split(',').map(kw => kw.trim()).filter(kw => kw.length > 0)
           : null
@@ -164,7 +165,7 @@ export default function AdminPage() {
         carry_along_yarn_id: '',
         is_active: true,
         search_query: '',
-        search_fields: ['name'],
+        expanded_search_query: '',
         negative_keywords: ''
       });
       
@@ -420,7 +421,7 @@ export default function AdminPage() {
 
         <div>
           <label className="block text-sm font-medium mb-2">
-            Search Query
+            Search Query (searches product name)
           </label>
           <input
             type="text"
@@ -428,46 +429,27 @@ export default function AdminPage() {
             value={formData.search_query}
             onChange={handleInputChange}
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
-            placeholder="Search terms for matching products"
+            placeholder="Search terms for matching product names"
           />
+          <p className="text-sm text-gray-500 mt-1">
+            This search query is always used to search the product name field.
+          </p>
         </div>
 
         <div>
           <label className="block text-sm font-medium mb-2">
-            Search Fields (default: name only)
+            Expanded Search Query (optional - searches all fields)
           </label>
-          <div className="space-y-2">
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={formData.search_fields.includes('name')}
-                onChange={(e) => handleSearchFieldsChange('name', e.target.checked)}
-                className="mr-2"
-                disabled
-              />
-              <span className="text-sm">Name (always included)</span>
-            </label>
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={formData.search_fields.includes('brand')}
-                onChange={(e) => handleSearchFieldsChange('brand', e.target.checked)}
-                className="mr-2"
-              />
-              <span className="text-sm">Brand</span>
-            </label>
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={formData.search_fields.includes('category')}
-                onChange={(e) => handleSearchFieldsChange('category', e.target.checked)}
-                className="mr-2"
-              />
-              <span className="text-sm">Category</span>
-            </label>
-          </div>
+          <input
+            type="text"
+            name="expanded_search_query"
+            value={formData.expanded_search_query}
+            onChange={handleInputChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            placeholder="Optional: search term that searches across name, brand, and category"
+          />
           <p className="text-sm text-gray-500 mt-1">
-            Select which fields to search. Products match if ANY selected field contains the search query.
+            If provided, this search query will search across all product fields (name, brand, category). Products match if the name matches the search query OR if any field matches the expanded search query.
           </p>
         </div>
 

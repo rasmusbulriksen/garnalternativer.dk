@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS yarn (
     carry_along_yarn_id INT REFERENCES yarn(yarn_id),
     is_active BOOLEAN DEFAULT TRUE,
     search_query TEXT,
-    search_fields TEXT[],
+    expanded_search_query TEXT,
     negative_keywords TEXT[],
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,

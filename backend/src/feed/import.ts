@@ -134,9 +134,9 @@ async function main() {
   const yarns = await pool.query<{
     yarn_id: number;
     search_query: string | null;
-    search_fields: string[] | null;
+    expanded_search_query: string | null;
     negative_keywords: string[] | null;
-  }>(`SELECT yarn_id, search_query, search_fields, negative_keywords FROM yarn WHERE search_query IS NOT NULL`);
+  }>(`SELECT yarn_id, search_query, expanded_search_query, negative_keywords FROM yarn WHERE search_query IS NOT NULL`);
 
   const yarnMatchCounts = new Map<number, number>();
 
@@ -158,32 +158,29 @@ async function main() {
           })
       : [];
 
-    // Determine which fields to search
-    // Default to name-only if search_fields is NULL or empty (backward compatibility)
-    // Valid fields: 'name', 'brand', 'category'
-    const searchFields = yarn.search_fields && yarn.search_fields.length > 0
-      ? yarn.search_fields.map(f => f.toLowerCase().trim()).filter(f => ['name', 'brand', 'category'].includes(f))
-      : ['name']; // Default to name-only search
-
-    // Build WHERE clause for multi-field search
-    // Always include name search, optionally add brand and category
+    // Build WHERE clause:
+    // - Always search name with search_query
+    // - Optionally search all fields (name, brand, category) with expanded_search_query
+    // Product matches if: (name matches search_query) OR (any field matches expanded_search_query if provided)
     const searchConditions: string[] = [];
-    const searchPattern = `%${yarn.search_query}%`;
+    const queryParams: any[] = [];
+    let paramIndex = 2; // $1 is yarn_id
     
-    if (searchFields.includes('name')) {
-      searchConditions.push('pi.name ILIKE $2');
-    }
-    if (searchFields.includes('brand')) {
-      searchConditions.push('pi.brand ILIKE $2');
-    }
-    if (searchFields.includes('category')) {
-      searchConditions.push('pi.category ILIKE $2');
+    // Name search always uses search_query
+    searchConditions.push(`pi.name ILIKE $${paramIndex}`);
+    queryParams.push(`%${yarn.search_query}%`);
+    paramIndex++;
+    
+    // Expanded search: if expanded_search_query is provided, search it across all fields
+    if (yarn.expanded_search_query) {
+      const expandedPattern = `%${yarn.expanded_search_query}%`;
+      searchConditions.push(`(pi.name ILIKE $${paramIndex} OR pi.brand ILIKE $${paramIndex} OR pi.category ILIKE $${paramIndex})`);
+      queryParams.push(expandedPattern);
+      paramIndex++;
     }
 
-    // Combine conditions with OR - product matches if ANY field matches
-    const whereClause = searchConditions.length > 0 
-      ? `(${searchConditions.join(' OR ')})`
-      : 'pi.name ILIKE $2'; // Fallback to name-only if somehow no fields selected
+    // Combine conditions with OR - product matches if name matches search_query OR any field matches expanded_search_query
+    const whereClause = searchConditions.join(' OR ');
 
     // Select cheapest per retailer using DISTINCT ON
     const aggRows = await pool.query<{
@@ -230,12 +227,12 @@ async function main() {
         NOW()
       FROM product_imported pi
       WHERE ${whereClause}
-        AND ($3::text[] IS NULL OR array_length($3::text[], 1) IS NULL OR NOT (pi.name ILIKE ANY ($3::text[])))
+        AND ($${paramIndex}::text[] IS NULL OR array_length($${paramIndex}::text[], 1) IS NULL OR NOT (pi.name ILIKE ANY ($${paramIndex}::text[])))
         AND pi.price_after_discount IS NOT NULL
       ORDER BY pi.retailer_id, pi.price_after_discount ASC, pi.product_imported_id ASC
       RETURNING *;
       `,
-      [yarn.yarn_id, searchPattern, neg.length > 0 ? neg : null]
+      [yarn.yarn_id, ...queryParams, neg.length > 0 ? neg : null]
     );
 
     yarnMatchCounts.set(yarn.yarn_id, aggRows.rowCount ?? 0);
@@ -305,15 +302,22 @@ async function main() {
   }
 
   // Update double yarn prices and activation status
+  // Only set is_active = TRUE if retailers have both yarns, otherwise leave unchanged
   for (const [yarnId, update] of doubleYarnUpdates.entries()) {
     await pool.query(
       `
       UPDATE yarn
       SET 
         lowest_price_on_the_market = $1,
-        is_active = $2,
-        active_since = CASE WHEN $2 = TRUE AND active_since IS NULL THEN NOW() ELSE active_since END,
-        inactive_since = CASE WHEN $2 = FALSE THEN NOW() ELSE inactive_since END,
+        is_active = CASE WHEN $2 = TRUE THEN TRUE ELSE is_active END,
+        active_since = CASE 
+          WHEN $2 = TRUE AND active_since IS NULL THEN NOW() 
+          ELSE active_since 
+        END,
+        inactive_since = CASE 
+          WHEN $2 = FALSE AND is_active = FALSE AND inactive_since IS NULL THEN NOW() 
+          ELSE inactive_since 
+        END,
         updated_at = NOW()
       WHERE yarn_id = $3
       `,
